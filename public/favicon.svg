@@ -1,0 +1,48 @@
+<svg width="500" height="520" viewBox="0 0 500 520" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <path id="jjfFaviconArcPrecision" d="M 64 235 A 188 188 0 1 1 436 235" fill="none" />
+  </defs>
+
+  <!-- 1. Main Background Yellow Circle with Deep Purple Border -->
+  <circle cx="250" cy="220" r="210" fill="#FFDE00" stroke="#2E1E6B" stroke-width="6" />
+
+  <!-- 2. Bright Orange Rainbow Halo Band -->
+  <path d="M 105 295 A 150 150 0 1 1 395 295" fill="none" stroke="#FA7815" stroke-width="28" stroke-linecap="butt" />
+
+  <!-- 3. Eight Distinct, Thin, Straight Sunburst Lines Radiating from the Center -->
+  <g stroke="#FA7815" stroke-width="3.5" stroke-linecap="round">
+    <line x1="205" y1="210" x2="112" y2="194" />
+    <line x1="212" y1="195" x2="132" y2="142" />
+    <line x1="225" y1="182" x2="172" y2="104" />
+    <line x1="240" y1="174" x2="224" y2="82" />
+    <line x1="260" y1="174" x2="276" y2="82" />
+    <line x1="275" y1="182" x2="328" y2="104" />
+    <line x1="288" y1="195" x2="368" y2="142" />
+    <line x1="295" y1="210" x2="388" y2="194" />
+  </g>
+
+  <!-- 4. Symmetrical Meditating Yogi in Padmasana with Gyan Mudra Hand Circles on Knees -->
+  <g fill="#48395F">
+    <circle cx="250" cy="152" r="19" />
+    <path d="M 243 174 C 243 178, 230 188, 204 204 C 180 218, 160 248, 154 274 C 152 284, 158 292, 172 286 C 184 280, 198 266, 206 252 C 212 242, 216 232, 218 220 C 218 232, 218 248, 216 268 C 208 278, 182 290, 165 302 C 157 308, 163 318, 180 320 C 202 322, 235 316, 250 316 C 265 316, 298 322, 320 320 C 337 318, 343 308, 335 302 C 318 290, 292 278, 284 268 C 282 248, 282 232, 282 220 C 284 232, 288 242, 294 252 C 302 266, 316 280, 328 286 C 342 292, 348 284, 346 274 C 340 248, 320 218, 296 204 C 270 188, 257 178, 257 174 Z" />
+    <ellipse cx="250" cy="308" rx="72" ry="16" />
+    <circle cx="164" cy="288" r="8.5" fill="#48395F" stroke="#FFDE00" stroke-width="1" />
+    <circle cx="336" cy="288" r="8.5" fill="#48395F" stroke="#FFDE00" stroke-width="1" />
+  </g>
+
+  <!-- 5. Dual Perfectly Symmetrical Green Leaves with White Crescent Highlights & Sharp V-Stem -->
+  <g>
+    <path d="M 250 495 C 246 435, 208 390, 138 344 C 90 338, 40 354, 24 358 C 36 378, 82 432, 148 464 C 190 484, 228 492, 250 495 Z" fill="#0E9F43" stroke="#0A7E35" stroke-width="2" />
+    <path d="M 250 495 C 254 435, 292 390, 362 344 C 410 338, 460 354, 476 358 C 464 378, 418 432, 352 464 C 310 484, 272 492, 250 495 Z" fill="#0E9F43" stroke="#0A7E35" stroke-width="2" />
+    <path d="M 235 475 C 185 455, 115 410, 115 358" stroke="white" stroke-width="6" stroke-linecap="round" fill="none" />
+    <path d="M 265 475 C 315 455, 385 410, 385 358" stroke="white" stroke-width="6" stroke-linecap="round" fill="none" />
+    <polygon points="246,488 250,512 254,488" fill="#0A7E35" />
+  </g>
+
+  <!-- 6. Arched Top Typography -->
+  <text fill="#2E1E6B" font-size="31" font-family="'Arial Black', 'Trebuchet MS', 'Impact', sans-serif" font-weight="900" letter-spacing="1.2">
+    <textPath href="#jjfFaviconArcPrecision" startOffset="50%" text-anchor="middle">
+      JEEVAN JYOTI FOUNDATION
+    </textPath>
+  </text>
+</svg>

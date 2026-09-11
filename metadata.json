@@ -1,0 +1,6 @@
+{
+  "name": "Jeevan Jyoti Foundation Ghazipur",
+  "description": "Official NGO platform for Jeevan Jyoti Foundation (Ghazipur, Uttar Pradesh, India) — Education, Food Distribution, Healthcare & Orphanage Support.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

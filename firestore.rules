@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is logged in
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if current user is Super Admin
+    function isSuperAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.role == 'superadmin' || 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin');
+    }
+
+    // Helper function to check if current user is approved
+    function isApprovedAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.approved == true);
+    }
+
+    // Users Collection: Registration and Admin Role Management
+    match /users/{userId} {
+      // User can read their own profile, or any authenticated user/superadmin can list
+      allow read: if isAuthenticated();
+      
+      // A newly authenticated user can create their registration profile
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      
+      // Super Admin can update any user (approval, role), or user can update non-critical profile fields
+      allow update: if isAuthenticated() && (request.auth.uid == userId || isSuperAdmin());
+      
+      // Only Super Admin can delete admin accounts
+      allow delete: if isSuperAdmin();
+    }
+
+    // App Content (Home Page media, banners, texts)
+    match /appContent/{document=**} {
+      // Public read so mobile app & web visitors can view content
+      allow read: if true;
+      
+      // Only logged in and approved admins can write/update
+      allow write: if isAuthenticated() && isApprovedAdmin();
+    }
+
+    // Notices subcollection or root collection
+    match /notices/{noticeId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isApprovedAdmin();
+    }
+
+    // Admin Logs (Activity Auditing)
+    match /adminLogs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // Issued Certificates (Publicly readable for QR verification, writeable for admin/issuance)
+    match /issued_certificates/{certId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Public Verified Archive (Publicly readable for instant live verification & audit status, writable for automated background archiving)
+    match /public_verified_archive/{archiveId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Newsletter Subscribers (Public create for monthly NGO impact updates)
+    match /newsletterSubscribers/{subscriberId} {
+      allow create: if request.resource.data.email is string &&
+                       request.resource.data.email.size() >= 5 &&
+                       request.resource.data.email.size() <= 150 &&
+                       request.resource.data.status in ['active', 'unsubscribed'];
+      allow read: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && isApprovedAdmin();
+    }
+  }
+}

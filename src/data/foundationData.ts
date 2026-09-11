@@ -1,0 +1,53 @@
+import { FoundationInfo } from '../types';
+
+export const FOUNDATION_INFO: FoundationInfo = {
+  nameHindi: 'जीवन ज्योति फाउंडेशन ग़ाज़ीपुर, उत्तर प्रदेश, भारत',
+  nameEnglish: 'JEEVAN JYOTI FOUNDATION, GHAZIPUR, UTTAR PRADESH, INDIA',
+  taglineHindi: 'सेवा • शिक्षा • स्वास्थ्य • स्वावलम्बन (समर्पित समाज सेवा)',
+  taglineEnglish: 'Sewa • Shiksha • Swasthya • Self Reliance',
+  regNo: 'GAZ/03373',
+  nitiAayogUid: 'UP/2018/0207700',
+  pan: 'AAEAJ3141Q',
+  urn80G: 'AAEAJ3141QF20231',
+  urn10A: 'AAEAJ3141QE20231',
+  address: 'ग्राम मीरानपुर उर्फ मदियावडीह, पोस्ट मीरानपुर, ब्लॉक मोहम्मदाबाद, जनपद ग़ाज़ीपुर, उत्तर प्रदेश, भारत - 233303 (DIGIPIN 2J6T226CL2)',
+  fullAddressHindi: 'ग्राम मीरानपुर उर्फ मदियावडीह, पोस्ट मीरानपुर, ब्लॉक मोहम्मदाबाद, जनपद ग़ाज़ीपुर, उत्तर प्रदेश, भारत (पिन कोड: 233303 [DIGIPIN 2J6T226CL2])',
+  fullAddressEnglish: 'Village Meeranpur Urf Madiyawadih, Post Meeranpur, Block Mohammadabad, District Ghazipur, Uttar Pradesh, India - 233303 (DIGIPIN 2J6T226CL2)',
+  village: 'मीरानपुर उर्फ मदियावडीह (Meeranpur Urf Madiyawadih)',
+  postOffice: 'मीरानपुर (Meeranpur)',
+  block: 'मोहम्मदाबाद (Mohammadabad)',
+  district: 'ग़ाज़ीपुर (Ghazipur)',
+  state: 'उत्तर प्रदेश (Uttar Pradesh)',
+  country: 'भारत (India)',
+  pincode: '233303',
+  digipin: '2J6T226CL2',
+  phone: '+91-8052361666',
+  email: 'jeevanjyotifoundationgzp@gmail.com',
+  website: 'https://jeevanjyotifoundation.org',
+  upiId: 'jeevanjyoti.gzp@sbi',
+  bankAccountName: 'JEEVAN JYOTI FOUNDATION',
+  bankAccountNumber: '718720110000323',
+  bankIfsc: 'BKID0007187',
+  bankName: 'BANK OF INDIA',
+  bankBranch: 'Daudpur',
+  presidentName: 'Shailesh Pradhan',
+  managerName: 'Shailesh Pradhan (Manager / Secretary)',
+  secretaryName: 'Shailesh Pradhan',
+  establishedYear: 2018,
+  googleMapsUrl: 'https://maps.app.goo.gl/72kFrETKbmiKA3gv7',
+  twitterHandle: '@SHAILESH1666',
+  xHandle: '@SHAILESH1666',
+  twitterUrl: 'https://x.com/SHAILESH1666',
+  xUrl: 'https://x.com/SHAILESH1666',
+  instagramHandle: '@jeevanjyotifoundation',
+  instagramUrl: 'https://instagram.com/jeevanjyotifoundation'
+};
+
+export const IMPACT_METRICS = {
+  childrenEducated: 1450,
+  mealsDistributed: 42800,
+  medicalCampsConducted: 86,
+  activeVolunteers: 320,
+  villagesCovered: 48,
+  fundsRaisedDirectly: 894000
+};

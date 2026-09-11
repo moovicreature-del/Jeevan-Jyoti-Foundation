@@ -1,0 +1,71 @@
+{
+  "id": "/",
+  "name": "जीवन ज्योति फाउंडेशन ग़ाज़ीपुर | Jeevan Jyoti Foundation",
+  "short_name": "Jeevan Jyoti",
+  "description": "जीवन ज्योति फाउंडेशन ग़ाज़ीपुर — बाल शिक्षा, स्वास्थ्य, अन्नपूर्णा भोजन सेवा एवं ऑनलाइन प्रमाण पत्र सत्यापन पोर्टल।",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#FFFDF9",
+  "theme_color": "#8B0000",
+  "orientation": "portrait-primary",
+  "lang": "hi",
+  "dir": "ltr",
+  "categories": ["social", "education", "lifestyle", "utilities"],
+  "icons": [
+    {
+      "src": "/pwa-icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon-maskable-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/pwa-icon-maskable-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "सत्यापन पोर्टल (Verify Certificate)",
+      "short_name": "सत्यापन",
+      "description": "ऑनलाइन प्रमाण पत्र एवं पहचान पत्र सत्यापन करें",
+      "url": "/#verification",
+      "icons": [{ "src": "/pwa-icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "सहयोग / दान करें (Donate 80G)",
+      "short_name": "दान करें",
+      "description": "80G कर छूट रसीद के साथ सुरक्षित दान करें",
+      "url": "/#donation",
+      "icons": [{ "src": "/pwa-icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "स्वयंसेवक कार्ड (Volunteer Card)",
+      "short_name": "स्वयंसेवक",
+      "description": "स्वयंसेवक डिजिटल पहचान पत्र प्राप्त करें",
+      "url": "/#volunteers",
+      "icons": [{ "src": "/pwa-icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

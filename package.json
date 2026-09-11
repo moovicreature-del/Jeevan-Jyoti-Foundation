@@ -1,0 +1,51 @@
+{
+  "name": "jeevan-jyoti-foundation-ghazipur",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "generate:sitemap": "node scripts/generate_sitemap.js",
+    "build": "node scripts/generate_sitemap.js && vite build",
+    "start": "node server.ts",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@google/genai": "*",
+    "@resvg/resvg-js": "^2.6.2",
+    "@types/html2canvas": "^1.0.0",
+    "canvas-confetti": "^1.9.4",
+    "clsx": "^2.1.1",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "firebase": "^12.17.1",
+    "firebase-admin": "^14.3.0",
+    "html-to-image": "^1.11.13",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^0.475.0",
+    "motion": "^13.1.0",
+    "nodemailer": "^9.0.5",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hot-toast": "^2.6.0",
+    "recharts": "^3.10.1",
+    "sharp": "^0.35.3",
+    "tailwind-merge": "^3.0.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.9",
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.5",
+    "@types/nodemailer": "^8.0.1",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.0.9",
+    "typescript": "^5.7.3",
+    "vite": "^6.2.0"
+  }
+}

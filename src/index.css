@@ -1,0 +1,357 @@
+@import "tailwindcss";
+
+@theme {
+  /* Jeevan Jyoti Foundation - Official Harmonized Brand Palette */
+  
+  /* 1. Royal Emblem Blue (#0015A8) - Primary Foundation Header & Outer Ring */
+  --color-brand-blue-50: #eef2ff;
+  --color-brand-blue-100: #dbe4fe;
+  --color-brand-blue-200: #bfd0fe;
+  --color-brand-blue-300: #93b3fd;
+  --color-brand-blue-400: #608ef9;
+  --color-brand-blue-500: #3b6ef4;
+  --color-brand-blue-600: #1a4ce7;
+  --color-brand-blue-700: #0015A8;
+  --color-brand-blue-800: #001082;
+  --color-brand-blue-900: #000c60;
+  --color-brand-blue-950: #000738;
+  --color-brand-blue: #0015A8;
+
+  /* 2. Radiant Sun Disc Yellow (#FFF200) - Solar Core Energy & Warmth */
+  --color-brand-yellow-50: #fffde6;
+  --color-brand-yellow-100: #fffbb8;
+  --color-brand-yellow-200: #fff880;
+  --color-brand-yellow-300: #fff447;
+  --color-brand-yellow-400: #FFF200;
+  --color-brand-yellow-500: #ffd700;
+  --color-brand-yellow-600: #e0b400;
+  --color-brand-yellow-700: #b88d00;
+  --color-brand-yellow-800: #8f6900;
+  --color-brand-yellow-900: #664700;
+  --color-brand-yellow: #FFF200;
+
+  /* 3. Sun Halo & Radiance Orange (#FF7A00) - Solar Arc & Radiating Rays */
+  --color-brand-orange-50: #fff7ed;
+  --color-brand-orange-100: #ffeed5;
+  --color-brand-orange-200: #ffd8aa;
+  --color-brand-orange-300: #ffbc74;
+  --color-brand-orange-400: #FF7A00;
+  --color-brand-orange-500: #ea6400;
+  --color-brand-orange-600: #cc4f00;
+  --color-brand-orange-700: #a33b00;
+  --color-brand-orange-800: #7d2c00;
+  --color-brand-orange-900: #571e00;
+  --color-brand-orange: #FF7A00;
+
+  /* 4. Vibrant Leaf Green (#00E000) - Life, Growth, Vitality & Renewal */
+  --color-brand-green-50: #ebffeb;
+  --color-brand-green-100: #c9ffc9;
+  --color-brand-green-200: #93ff93;
+  --color-brand-green-300: #4eff4e;
+  --color-brand-green-400: #12f512;
+  --color-brand-green-500: #00E000;
+  --color-brand-green-600: #00b300;
+  --color-brand-green-700: #008700;
+  --color-brand-green-800: #005c00;
+  --color-brand-green-900: #003600;
+  --color-brand-green: #00E000;
+
+  /* 5. Serene Meditative Indigo Slate (#39385C) - Silhouette & Balance */
+  --color-brand-indigo-50: #f5f4f8;
+  --color-brand-indigo-100: #ebe9f1;
+  --color-brand-indigo-200: #d6d3e3;
+  --color-brand-indigo-300: #b4afcc;
+  --color-brand-indigo-400: #8881af;
+  --color-brand-indigo-500: #625b90;
+  --color-brand-indigo-600: #4d4677;
+  --color-brand-indigo-700: #39385C;
+  --color-brand-indigo-800: #2a2944;
+  --color-brand-indigo-900: #1d1c2f;
+  --color-brand-indigo: #39385C;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@keyframes pulseSlow {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.03); opacity: 0.92; }
+}
+
+.animate-pulse-slow {
+  animation: pulseSlow 3s ease-in-out infinite;
+}
+
+/* ========================================================================= */
+/* SMOOTH CONTINUOUS MARQUEE SCROLL ENGINE                                   */
+/* ========================================================================= */
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-smooth {
+  display: inline-flex;
+  width: max-content;
+  will-change: transform;
+  animation: marqueeScroll var(--marquee-duration, 28s) linear infinite;
+}
+
+.animate-marquee-smooth:hover,
+.animate-marquee-smooth[data-paused="true"] {
+  animation-play-state: paused !important;
+}
+
+/* ========================================================================= */
+/* ENHANCED PRINT-SPECIFIC CSS RULES & COLOR FIDELITY ENGINE                 */
+/* Compatible across Chrome, Safari, Firefox, Edge, iOS & Android Print UI   */
+/* ========================================================================= */
+@media print {
+  /* Page Geometry & Zero Marginal Clippings */
+  @page {
+    size: auto;
+    margin: 8mm 6mm;
+  }
+
+  /* Universal Color & Background Graphics Preservation */
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    text-shadow: none !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Root Document Setup */
+  html,
+  body {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+    -webkit-font-smoothing: antialiased !important;
+    text-rendering: optimizeLegibility !important;
+  }
+
+  /* Hide Standard Web Application UI / Navigation / Overlays / Floating Elements */
+  header,
+  footer,
+  nav,
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea,
+  .no-print,
+  .no-print *,
+  #jyoti-bot-container,
+  #jyoti-bot-launcher,
+  .floating-share-toolbar,
+  .pwa-banner,
+  .network-status-toast {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Reset Modal & Overlay Constraints during Print Dialog */
+  .fixed.inset-0,
+  .fixed,
+  [role="dialog"],
+  .modal-backdrop,
+  .modal-overlay,
+  .backdrop-blur-sm,
+  .backdrop-blur-md {
+    position: static !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    display: block !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Default Hidden State for Non-Printable Elements */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Isolate & Render Validated Printable Documents */
+  .printable-certificate,
+  .printable-certificate *,
+  .printable-table,
+  .printable-table *,
+  [data-printable="true"],
+  [data-printable="true"] *,
+  #a4-80g-receipt,
+  #a4-80g-receipt *,
+  #festival-certificate-card,
+  #festival-certificate-card *,
+  #annual-report-card-capture,
+  #annual-report-card-capture *,
+  .printable-id-card,
+  .printable-id-card * {
+    visibility: visible !important;
+  }
+
+  /* Base Document Alignment & Page Break Discipline */
+  .printable-certificate,
+  .printable-table,
+  [data-printable="true"],
+  #a4-80g-receipt,
+  #festival-certificate-card,
+  #annual-report-card-capture,
+  .printable-id-card {
+    position: relative !important;
+    display: block !important;
+    margin: 0 auto !important;
+    float: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+    filter: none !important;
+    left: auto !important;
+    top: auto !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-before: auto !important;
+    page-break-after: avoid !important;
+    -webkit-box-decoration-break: clone !important;
+    box-decoration-break: clone !important;
+  }
+
+  /* A4 Portrait Documents (e.g. 80G Tax Exemption Receipts & Annual Report Cards) */
+  #a4-80g-receipt,
+  #annual-report-card-capture {
+    width: 100% !important;
+    max-width: 196mm !important;
+    margin: 0 auto !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* A4 Landscape Certificates (e.g. Volunteer, Donation, Festival & Task Appreciation) */
+  .printable-certificate[style*="minWidth: 880px"],
+  .printable-certificate[style*="width: 880px"],
+  #festival-certificate-card,
+  .printable-certificate.landscape {
+    max-width: 270mm !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+  }
+
+  /* High Precision Vector & Asset Rendering */
+  svg {
+    shape-rendering: geometricPrecision !important;
+    text-rendering: geometricPrecision !important;
+  }
+
+  img {
+    max-width: 100% !important;
+    image-rendering: -webkit-optimize-contrast !important;
+    image-rendering: crisp-edges !important;
+  }
+
+  /* Structural Table Rows and Form Fields Protection */
+  table, tr, td, th {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Watermark & Emblem Opacity Fidelity */
+  #vol-cert-watermark,
+  #don-cert-watermark,
+  #swayam-card-watermark,
+  #fest-cert-watermark,
+  #ann-rep-watermark,
+  [id$="-watermark"] {
+    opacity: 0.12 !important;
+    visibility: visible !important;
+    display: flex !important;
+  }
+
+  /* Official Signature & QR Code Preservation */
+  #receipt-signature-shailesh,
+  #certificate-qr-container,
+  #vol-cert-qr,
+  #don-cert-qr,
+  .official-seal-badge {
+    visibility: visible !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
+
+/* ==========================================================================
+   Google Translate Widget & Top Bar Clean Overrides
+   ========================================================================== */
+.goog-te-banner-frame.skiptranslate,
+.goog-te-banner-frame,
+iframe.goog-te-banner-frame {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0px !important;
+}
+
+body {
+  top: 0px !important;
+  position: static !important;
+}
+
+.goog-tooltip,
+.goog-tooltip:hover {
+  display: none !important;
+}
+
+.goog-text-highlight {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+#google_translate_element select {
+  background-color: #ffffff;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+}
+
+.goog-te-gadget-icon,
+.goog-logo-link {
+  display: none !important;
+}
+
+.goog-te-gadget {
+  font-size: 0px !important;
+}
+
+.goog-te-gadget span {
+  display: none !important;
+}
+

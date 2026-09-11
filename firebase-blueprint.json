@@ -1,0 +1,146 @@
+{
+  "entities": {
+    "users": {
+      "title": "users",
+      "description": "Admin and Super Admin user profiles and verification status",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Admin full name" },
+        "mobile": { "type": "string", "description": "Mobile phone number" },
+        "email": { "type": "string", "description": "Email address" },
+        "role": { "type": "string", "enum": ["superadmin", "admin"], "description": "User permission role" },
+        "approved": { "type": "boolean", "description": "Whether the admin has been approved by Super Admin" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation ISO timestamp" },
+        "lastLogin": { "type": "string", "format": "date-time", "description": "Last login timestamp" }
+      },
+      "required": ["name", "mobile", "role", "approved"]
+    },
+    "appContent": {
+      "title": "appContent",
+      "description": "Dynamic Home Page content, media banners, multi-photo slider, and text sections",
+      "type": "object",
+      "properties": {
+        "heroTitle": { "type": "string" },
+        "heroSubtitle": { "type": "string" },
+        "aboutText": { "type": "string" },
+        "missionText": { "type": "string" },
+        "footerText": { "type": "string" },
+        "bannerImageUrl": { "type": "string" },
+        "bannerImages": { "type": "array", "description": "Multiple banner photo URLs for automatic slideshow" },
+        "sliderPhotos": { "type": "array", "description": "Array of structured slider photo objects with title and caption" },
+        "sliderAutoPlay": { "type": "boolean", "description": "Whether slideshow runs automatically" },
+        "sliderInterval": { "type": "number", "description": "Slide interval in seconds" },
+        "bannerVideoUrl": { "type": "string" },
+        "bannerTitle": { "type": "string" },
+        "bannerSubtitle": { "type": "string" },
+        "appLogoUrl": { "type": "string" },
+        "updatedBy": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "notices": {
+      "title": "notices",
+      "description": "Notices displayed on the Home Page notice board",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "date": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "updatedBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "message", "isActive"]
+    },
+    "adminLogs": {
+      "title": "adminLogs",
+      "description": "Activity audit logs for super admin",
+      "type": "object",
+      "properties": {
+        "adminUid": { "type": "string" },
+        "adminName": { "type": "string" },
+        "action": { "type": "string" },
+        "details": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["adminName", "action", "timestamp"]
+    },
+    "issuedCertificates": {
+      "title": "issuedCertificates",
+      "description": "Issued certificates and IDs stored in database with QR code metadata",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique certificate ID e.g. JJF-VOL-2026-01" },
+        "type": { "type": "string", "description": "Type of certificate" },
+        "titleHindi": { "type": "string" },
+        "titleEnglish": { "type": "string" },
+        "recipientName": { "type": "string" },
+        "fatherOrHusbandName": { "type": "string" },
+        "phone": { "type": "string" },
+        "issueDate": { "type": "string" },
+        "status": { "type": "string" },
+        "qrVerificationUrl": { "type": "string" },
+        "amount": { "type": "number" },
+        "details": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "type", "recipientName", "phone", "issueDate"]
+    },
+    "publicVerifiedArchive": {
+      "title": "publicVerifiedArchive",
+      "description": "Public verified archive of all issued certificates, donor 80G receipts, volunteer cards, and appreciation awards for instant public verification and real-time status updates",
+      "type": "object",
+      "properties": {
+        "certificateId": { "type": "string", "description": "Unique standardized certificate or credential ID" },
+        "type": { "type": "string", "description": "Credential type (volunteer_cert, donation_80g, volunteer_id, task_appreciation, festival_greeting)" },
+        "titleHindi": { "type": "string" },
+        "titleEnglish": { "type": "string" },
+        "recipientName": { "type": "string" },
+        "fatherOrHusbandName": { "type": "string" },
+        "phone": { "type": "string" },
+        "issueDate": { "type": "string" },
+        "verificationStatus": { "type": "string", "enum": ["VERIFIED_ACTIVE", "OFFICIALLY_CERTIFIED", "EXEMPTION_CONFIRMED", "ACTIVE", "REVOKED"] },
+        "categoryOrPurpose": { "type": "string" },
+        "amount": { "type": "number" },
+        "details": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "qrVerificationUrl": { "type": "string" },
+        "verificationHash": { "type": "string", "description": "Cryptographic tamper-evident signature digest" },
+        "verificationCount": { "type": "number", "description": "Total public verification lookups recorded" },
+        "lastVerifiedAt": { "type": "string", "format": "date-time" },
+        "archivedAt": { "type": "string", "format": "date-time" },
+        "isPubliclyVerified": { "type": "boolean" },
+        "source": { "type": "string" }
+      },
+      "required": ["certificateId", "type", "recipientName", "issueDate", "verificationStatus"]
+    },
+    "newsletterSubscribers": {
+      "title": "newsletterSubscribers",
+      "description": "User email subscribers for monthly NGO impact updates, social service reports, and volunteer notices",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email", "description": "Subscriber email address" },
+        "subscribedAt": { "type": "string", "format": "date-time", "description": "ISO timestamp of signup" },
+        "status": { "type": "string", "enum": ["active", "unsubscribed"], "description": "Subscription status" },
+        "source": { "type": "string", "description": "Signup source (e.g. footer_newsletter)" },
+        "preferredLanguage": { "type": "string", "description": "User preferred language (hi or en)" }
+      },
+      "required": ["email", "subscribedAt", "status"]
+    }
+  },
+  "firestore": {
+    "/issued_certificates/{certId}": {
+      "schema": { "$ref": "issuedCertificates" },
+      "description": "Registry of issued certificates, cards, and tax receipts for online QR verification and authorized downloads"
+    },
+    "/public_verified_archive/{archiveId}": {
+      "schema": { "$ref": "publicVerifiedArchive" },
+      "description": "Public Verified Archive collection enabling instant public status updates, tamper-proof audit trails, and live verification lookups"
+    },
+    "/newsletterSubscribers/{subscriberId}": {
+      "schema": { "$ref": "newsletterSubscribers" },
+      "description": "Collection of verified newsletter subscriber emails for monthly NGO impact bulletins and annual welfare reports"
+    }
+  }
+}
