@@ -9,7 +9,8 @@ import {
   Auth,
   initializeAuth,
   browserLocalPersistence,
-  inMemoryPersistence
+  inMemoryPersistence,
+  browserPopupRedirectResolver
 } from 'firebase/auth';
 import {
   initializeFirestore,
@@ -22,6 +23,10 @@ import { getStorage, FirebaseStorage } from 'firebase/storage';
 import firebaseConfigData from '../../firebase-applet-config.json';
 
 // फ़ायरबेस प्रोजेक्ट कॉन्फ़िगरेशन (Firebase configuration values)
+export const OAUTH_CLIENT_ID: string = firebaseConfigData.oAuthClientId || '';
+export const AUTH_DOMAIN: string = firebaseConfigData.authDomain || '';
+export const PROJECT_ID: string = firebaseConfigData.projectId || '';
+
 const firebaseConfig = {
   apiKey: firebaseConfigData.apiKey,
   authDomain: firebaseConfigData.authDomain,
@@ -37,11 +42,12 @@ export const app: FirebaseApp = !getApps().length
   ? initializeApp(firebaseConfig) 
   : getApp();
 
-// Firebase Auth Service with LocalStorage persistence to prevent IndexedDB closing/hidden error in v12.17
+// Firebase Auth Service with LocalStorage persistence and browser popup redirect resolver
 export const auth: Auth = (() => {
   try {
     return initializeAuth(app, {
-      persistence: [browserLocalPersistence, inMemoryPersistence]
+      persistence: [browserLocalPersistence, inMemoryPersistence],
+      popupRedirectResolver: browserPopupRedirectResolver
     });
   } catch {
     try {

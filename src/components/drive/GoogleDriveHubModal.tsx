@@ -34,6 +34,9 @@ import {
   deleteDriveFile,
   formatFileSize,
   GoogleDriveFile,
+  GoogleDriveUser,
+  getOAuthEnvironmentInfo,
+  requestAccessTokenViaGSI,
 } from '../../services/googleDriveService';
 import { useLanguage } from '../../context/LanguageContext';
 import { DONORS_DATA } from '../../data/donorsData';
@@ -54,10 +57,12 @@ export const GoogleDriveHubModal: React.FC<GoogleDriveHubModalProps> = ({ isOpen
   const { isHindi } = useLanguage();
 
   // Authentication State
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | GoogleDriveUser | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(getDriveAccessToken());
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [showOAuthDiagnostics, setShowOAuthDiagnostics] = useState(false);
+  const oauthEnv = getOAuthEnvironmentInfo();
 
   // Drive Navigation & Files State
   const [files, setFiles] = useState<GoogleDriveFile[]>([]);
@@ -142,12 +147,31 @@ export const GoogleDriveHubModal: React.FC<GoogleDriveHubModalProps> = ({ isOpen
       let msg = err.message || 'Google Drive authentication failed';
       if (err.code === 'auth/popup-blocked') {
         msg = isHindi
-          ? 'पॉपअप ब्लॉक हो गया है। कृपया ब्राउज़र में पॉपअप की अनुमति दें या नए टैब में खोलें।'
+          ? 'ब्राउज़र द्वारा लॉगिन पॉपअप ब्लॉक कर दिया गया है। कृपया ब्राउज़र सेटिंग्स में पॉपअप की अनुमति दें या पोर्टल को नए टैब में खोलें।'
           : 'Popup was blocked by the browser. Please allow popups or open in a new tab.';
-      } else if (err.code === 'auth/cancelled-popup-request') {
-        msg = isHindi ? 'लॉगिन रद्द किया गया।' : 'Sign-in cancelled.';
+      } else if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+        msg = isHindi ? 'लॉगिन विंडो बंद कर दी गई या रद्द कर दी गई।' : 'Sign-in was cancelled or window closed.';
+      } else if (err.code === 'auth/unauthorized-domain') {
+        msg = isHindi
+          ? 'यह डोमेन Firebase/Google OAuth में अधिकृत नहीं है। कृपया Authorized Domains जांचें।'
+          : 'This domain is not authorized in Firebase Auth.';
       }
       setAuthError(msg);
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleGsiSignIn = async () => {
+    setIsAuthenticating(true);
+    setAuthError(null);
+    try {
+      const res = await requestAccessTokenViaGSI();
+      setCurrentUser(res.user);
+      setAccessToken(res.accessToken);
+    } catch (err: any) {
+      console.error('GIS token error:', err);
+      setAuthError(err.message || 'Direct Google Identity sign-in failed');
     } finally {
       setIsAuthenticating(false);
     }
@@ -428,7 +452,7 @@ export const GoogleDriveHubModal: React.FC<GoogleDriveHubModalProps> = ({ isOpen
             )}
 
             {/* Official Material Design "Sign in with Google" Button */}
-            <div className="pt-2">
+            <div className="pt-2 flex flex-col items-center gap-2.5">
               <button
                 type="button"
                 id="google-drive-signin-btn"
@@ -468,6 +492,22 @@ export const GoogleDriveHubModal: React.FC<GoogleDriveHubModalProps> = ({ isOpen
                     : 'Sign in with Google'}
                 </span>
               </button>
+
+              {/* Direct GIS Fallback Button (visible when needed or after an error) */}
+              {authError && (
+                <button
+                  type="button"
+                  id="google-drive-gis-signin-btn"
+                  disabled={isAuthenticating}
+                  onClick={handleGsiSignIn}
+                  className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold underline underline-offset-2 flex items-center gap-1.5 mt-1 transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  {isHindi
+                    ? 'डायरेक्ट गूगल आइडेंटिटी सर्विस (GIS) से प्रयास करें'
+                    : 'Try Direct Google Identity Services (GIS)'}
+                </button>
+              )}
             </div>
 
             <p className="text-[11px] text-slate-400 max-w-sm">
@@ -475,6 +515,73 @@ export const GoogleDriveHubModal: React.FC<GoogleDriveHubModalProps> = ({ isOpen
                 ? 'सहमति के साथ आपकी गूगल ड्राइव फाइलों को सुरक्षित तरीके से सूचीबद्ध व प्रबंधित किया जाएगा।'
                 : 'With your explicit consent, your Google Drive files will be securely listed and managed.'}
             </p>
+
+            <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-[11px] text-slate-500 max-w-sm">
+              {isHindi
+                ? '💡 यदि पॉपअप न खुले तो ब्राउज़र सेटिंग्स से पॉपअप की अनुमति दें अथवा पोर्टल को नए टैब में खोलें।'
+                : '💡 If popup does not open, allow popups in browser or open portal in a new tab.'}
+            </div>
+
+            {/* OAuth Environment & Redirect URI Inspector */}
+            <div className="w-full max-w-md mt-2">
+              <button
+                type="button"
+                id="toggle-oauth-env-btn"
+                onClick={() => setShowOAuthDiagnostics(!showOAuthDiagnostics)}
+                className="text-[11px] text-slate-500 hover:text-slate-800 font-medium flex items-center justify-center gap-1 mx-auto py-1 transition-colors cursor-pointer"
+              >
+                <span>
+                  {showOAuthDiagnostics
+                    ? isHindi
+                      ? '▼ OAuth व पर्यावरण विवरण छिपाएं'
+                      : '▼ Hide OAuth & Environment Details'
+                    : isHindi
+                    ? '▶ OAuth व पर्यावरण विवरण देखें (Environment & Scopes)'
+                    : '▶ View OAuth & Environment Details (Scopes & URI)'}
+                </span>
+              </button>
+
+              {showOAuthDiagnostics && (
+                <div className="mt-2 text-left bg-slate-900 text-slate-200 rounded-xl p-3.5 text-xs font-mono border border-slate-800 space-y-2.5 shadow-inner">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
+                    <span className="font-bold text-amber-400">OAuth 2.0 Environment</span>
+                    <span className="text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded border border-emerald-800">
+                      Verified
+                    </span>
+                  </div>
+
+                  <div>
+                    <div className="text-[10px] text-slate-400">OAuth Client ID:</div>
+                    <div className="text-[11px] text-slate-200 break-all select-all font-semibold">
+                      {oauthEnv.oAuthClientId || 'Configured in firebase-applet-config.json'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-[10px] text-slate-400">Authorized Scopes:</div>
+                    <ul className="text-[10px] text-emerald-400 space-y-0.5 mt-0.5">
+                      {oauthEnv.scopes.map((s, idx) => (
+                        <li key={idx} className="break-all">• {s}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <div className="text-[10px] text-slate-400">Firebase Auth Redirect URI:</div>
+                    <div className="text-[11px] text-blue-300 break-all select-all">
+                      {oauthEnv.firebaseRedirectUri || 'https://gen-lang-client-0584352717.firebaseapp.com/__/auth/handler'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-[10px] text-slate-400">Current App Environment Origin:</div>
+                    <div className="text-[11px] text-amber-300 break-all select-all">
+                      {oauthEnv.currentOrigin}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           /* ========================================================================= */

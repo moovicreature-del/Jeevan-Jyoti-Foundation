@@ -8,26 +8,23 @@ import {
   signInWithPopup,
   signOut,
   onAuthStateChanged,
+  browserPopupRedirectResolver,
   User,
 } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { auth, OAUTH_CLIENT_ID, AUTH_DOMAIN, PROJECT_ID } from '../lib/firebase';
 
-// Google Drive Scopes configured in OAuth setup
+// Google Drive Scopes configured for Google Workspace Drive access
 export const GOOGLE_DRIVE_SCOPES = [
   'https://www.googleapis.com/auth/drive',
-  'https://www.googleapis.com/auth/drive.activity',
-  'https://www.googleapis.com/auth/drive.activity.readonly',
-  'https://www.googleapis.com/auth/drive.appdata',
-  'https://www.googleapis.com/auth/drive.apps.readonly',
-  'https://www.googleapis.com/auth/drive.file',
-  'https://www.googleapis.com/auth/drive.install',
-  'https://www.googleapis.com/auth/drive.meet.readonly',
-  'https://www.googleapis.com/auth/drive.metadata',
-  'https://www.googleapis.com/auth/drive.metadata.readonly',
-  'https://www.googleapis.com/auth/drive.photos.readonly',
-  'https://www.googleapis.com/auth/drive.readonly',
-  'https://www.googleapis.com/auth/drive.scripts'
+  'https://www.googleapis.com/auth/drive.file'
 ];
+
+export interface GoogleDriveUser {
+  displayName?: string | null;
+  email?: string | null;
+  photoURL?: string | null;
+  uid?: string;
+}
 
 export interface GoogleDriveFile {
   id: string;
@@ -52,18 +49,120 @@ function createDriveAuthProvider(): GoogleAuthProvider {
   const provider = new GoogleAuthProvider();
   GOOGLE_DRIVE_SCOPES.forEach((scope) => provider.addScope(scope));
   provider.setCustomParameters({
-    prompt: 'select_account',
-    access_type: 'offline'
+    prompt: 'select_account'
   });
   return provider;
 }
+
+/**
+ * Get OAuth Environment & Redirect URI verification details
+ */
+export const getOAuthEnvironmentInfo = () => {
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+  const isDevUrl = currentOrigin.includes('ais-dev');
+  const isPreUrl = currentOrigin.includes('ais-pre');
+  const isLocal = currentOrigin.includes('localhost') || currentOrigin.includes('127.0.0.1');
+
+  return {
+    projectId: PROJECT_ID,
+    oAuthClientId: OAUTH_CLIENT_ID,
+    authDomain: AUTH_DOMAIN,
+    firebaseRedirectUri: AUTH_DOMAIN ? `https://${AUTH_DOMAIN}/__/auth/handler` : '',
+    currentOrigin,
+    scopes: GOOGLE_DRIVE_SCOPES,
+    isAuthorizedEnvironment: isDevUrl || isPreUrl || isLocal || currentOrigin.includes('firebaseapp.com'),
+  };
+};
+
+/**
+ * Direct OAuth Token acquisition using Google Identity Services (GSI)
+ * Fallback when Firebase Auth popup is restricted by cross-origin iframe or domain policy
+ */
+export const requestAccessTokenViaGSI = (): Promise<{
+  user: GoogleDriveUser;
+  accessToken: string;
+}> => {
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined') {
+      reject(new Error('Window environment not available'));
+      return;
+    }
+
+    const google = (window as any).google;
+    if (!google?.accounts?.oauth2) {
+      reject(new Error('Google Identity Services (GSI) script is not yet loaded in browser.'));
+      return;
+    }
+
+    if (!OAUTH_CLIENT_ID) {
+      reject(new Error('OAuth Client ID is missing from firebase-applet-config.json.'));
+      return;
+    }
+
+    try {
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: OAUTH_CLIENT_ID,
+        scope: GOOGLE_DRIVE_SCOPES.join(' '),
+        callback: async (resp: any) => {
+          if (resp.error) {
+            reject(new Error(resp.error_description || resp.error));
+            return;
+          }
+          if (!resp.access_token) {
+            reject(new Error('No access token received from Google OAuth.'));
+            return;
+          }
+
+          cachedAccessToken = resp.access_token;
+
+          // Retrieve user profile information using access token
+          let userProfile: GoogleDriveUser = {
+            displayName: 'Google Drive User',
+            email: 'user@google.com',
+            photoURL: '',
+            uid: 'gsi_' + Date.now(),
+          };
+
+          try {
+            const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+              headers: { Authorization: `Bearer ${resp.access_token}` },
+            });
+            if (profileRes.ok) {
+              const data = await profileRes.json();
+              userProfile = {
+                displayName: data.name || data.email,
+                email: data.email,
+                photoURL: data.picture || '',
+                uid: data.sub || 'gsi_' + Date.now(),
+              };
+            }
+          } catch (profileErr) {
+            console.warn('[GSI] Non-fatal profile fetch notice:', profileErr);
+          }
+
+          resolve({
+            user: userProfile,
+            accessToken: resp.access_token,
+          });
+        },
+        error_callback: (err: any) => {
+          reject(err);
+        },
+      });
+
+      tokenClient.requestAccessToken({ prompt: 'select_account' });
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
 
 /**
  * Initialize Drive Auth State Listener
  * Caches access token in memory while user is signed in, clears on sign-out
  */
 export const initDriveAuth = (
-  onAuthSuccess?: (user: User, token: string) => void,
+  onAuthSuccess?: (user: User | GoogleDriveUser, token: string) => void,
   onAuthFailure?: () => void
 ) => {
   if (!auth) {
@@ -83,32 +182,56 @@ export const initDriveAuth = (
 
 /**
  * Sign in with Google using popup to acquire Google Drive access token
+ * Handles both Firebase Auth popup resolver and GSI direct token fallback
  */
 export const signInWithGoogleDrive = async (): Promise<{
-  user: User;
+  user: User | GoogleDriveUser;
   accessToken: string;
 }> => {
-  if (!auth) {
-    throw new Error('Firebase Auth is not initialized. Check your Firebase credentials.');
-  }
-
   try {
     isSigningIn = true;
-    const provider = createDriveAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    const credential = GoogleAuthProvider.credentialFromResult(result);
 
-    if (!credential?.accessToken) {
-      throw new Error(
-        'Google did not return an access token. Please ensure third-party popups are enabled.'
-      );
+    // Primary Flow: Firebase Auth with explicit popup redirect resolver
+    if (auth) {
+      try {
+        const provider = createDriveAuthProvider();
+        // Passing browserPopupRedirectResolver explicitly eliminates auth/argument-error
+        const result = await signInWithPopup(auth, provider, browserPopupRedirectResolver);
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+
+        if (credential?.accessToken) {
+          cachedAccessToken = credential.accessToken;
+          return {
+            user: result.user,
+            accessToken: cachedAccessToken,
+          };
+        }
+      } catch (firebaseError: any) {
+        console.warn('[Google Drive Auth] Firebase popup notice:', firebaseError?.code, firebaseError?.message);
+
+        // If Firebase Auth throws domain/popup error, attempt direct GSI fallback if available
+        if (
+          (firebaseError?.code === 'auth/unauthorized-domain' ||
+            firebaseError?.code === 'auth/popup-blocked' ||
+            firebaseError?.code === 'auth/popup-closed-by-user') &&
+          typeof window !== 'undefined' &&
+          (window as any).google?.accounts?.oauth2 &&
+          OAUTH_CLIENT_ID
+        ) {
+          const gsiResult = await requestAccessTokenViaGSI();
+          return gsiResult;
+        }
+
+        throw firebaseError;
+      }
     }
 
-    cachedAccessToken = credential.accessToken;
-    return {
-      user: result.user,
-      accessToken: cachedAccessToken,
-    };
+    // Fallback if auth is not initialized
+    if (typeof window !== 'undefined' && (window as any).google?.accounts?.oauth2 && OAUTH_CLIENT_ID) {
+      return await requestAccessTokenViaGSI();
+    }
+
+    throw new Error('Authentication services are not available.');
   } catch (error: any) {
     console.error('[Google Drive Auth] Sign in error:', error);
     throw error;
