@@ -1,6 +1,6 @@
 /**
  * Jeevan Jyoti Foundation - Certificate & Receipt Number Generation Utility
- * Generates official registration, certificate, ID card and 80G numbers based on
+ * Generates official registration, certificate, ID card and donation receipt numbers based on
  * issued number, month and year (Issued Number / Month / Year)
  * 
  * Standard Format: JJF/<TYPE>/<YEAR>/<MONTH>/<ISSUED_NUMBER>
@@ -8,12 +8,12 @@
  * Examples:
  *  - Volunteer Certificate: JJF/VOL/2026/08/01
  *  - Swayam Sewak ID: JJF/ID/2026/08/01
- *  - 80G Donation Receipt: JJF/80G/2026/08/01
+ *  - Donation Receipt: JJF/DON/2026/08/01
  *  - Task Appreciation Award: JJF/APP/2026/08/01
  *  - Festival Wishing Certificate: JJF/FEST/2026/08/01
  */
 
-export type CertificateTypePrefix = 'VOL' | 'ID' | '80G' | 'APP' | 'FEST' | 'DON' | 'REP';
+export type CertificateTypePrefix = 'VOL' | 'ID' | 'APP' | 'FEST' | 'DON' | 'REP';
 
 const inMemoryCounters: Record<string, number> = {};
 

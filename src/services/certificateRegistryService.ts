@@ -158,8 +158,30 @@ export function getAllRegisteredCertificates(): RegisteredCertificateItem[] {
     if (stored) {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed)) {
-        // Strict filter: exclude any dummy certificates
-        return parsed.filter((item) => !isDummyCertificate(item));
+        // Strict filter: exclude any dummy certificates and sanitize any old 80G mentions
+        return parsed
+          .filter((item) => !isDummyCertificate(item))
+          .map((item) => {
+            const cleanedTitleHindi = (item.titleHindi || '')
+              .replace(/धारा\s*80G\s*आयकर\s*/gi, '')
+              .replace(/80G\s*आयकर\s*/gi, '')
+              .replace(/80G\s*/gi, '')
+              .trim();
+            const cleanedTitleEnglish = (item.titleEnglish || '')
+              .replace(/80G\s*Tax\s*Exemption\s*/gi, '')
+              .replace(/80G\s*/gi, '')
+              .trim();
+            const cleanedDetails = (item.details || '')
+              .replace(/•\s*80G\s*URN\s*अधिकृत/gi, '• अधिकृत रसीद')
+              .replace(/80G/gi, '')
+              .trim();
+            return {
+              ...item,
+              titleHindi: cleanedTitleHindi || item.titleHindi,
+              titleEnglish: cleanedTitleEnglish || item.titleEnglish,
+              details: cleanedDetails || item.details
+            };
+          });
       }
     }
   } catch (e) {
@@ -336,7 +358,7 @@ export interface ServerVerificationSeal {
   authority: string;
   registrationNumber: string;
   nitiAayogUid: string;
-  section80G_URN: string;
+  section80G_URN?: string;
   section12A_URN: string;
   signatory: string;
   securityTier: string;
@@ -420,7 +442,7 @@ export async function verifyCertificateWithServerQR(
           authority: 'जीवन ज्योति फाउंडेशन ग़ाज़ीपुर (उ.प्र.)',
           registrationNumber: 'GAZ/03373',
           nitiAayogUid: 'UP/2018/0207700',
-          section80G_URN: 'AAEAJ3141QF20231',
+          section80G_URN: '',
           section12A_URN: 'AAEAJ3141QE20231',
           signatory: 'Shailesh Pradhan (Manager & Secretary)',
           securityTier: 'Firebase Admin SDK Verified & Cryptographically Signed',

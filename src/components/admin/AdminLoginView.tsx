@@ -17,7 +17,10 @@ import {
   RotateCw,
   Crown,
   AlertTriangle,
-  UserCheck
+  UserCheck,
+  Eye,
+  EyeOff,
+  UserPlus
 } from 'lucide-react';
 import {
   useAdminAuth,
@@ -25,6 +28,7 @@ import {
   ADMIN_PHONE
 } from '../../context/AdminAuthContext';
 import { AdminRole } from '../../types';
+import { CreateAdminCredentialsForm } from './CreateAdminCredentialsForm';
 import toast from 'react-hot-toast';
 
 interface AdminLoginViewProps {
@@ -38,16 +42,26 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({ onSuccess, onCan
     verifyOtpAndLogin,
     submitRegistration,
     setupRecaptcha,
+    loginWithCredentials,
     loginAsDemoSuperAdmin,
     loginAsDemoAdmin,
     adminProfile,
     isApproved
   } = useAdminAuth();
 
-  // फ़ॉर्म स्टेप्स: 'phone' -> 'otp' -> 'register' -> 'pending'
+  // लॉगिन मोड: 'credentials' (ID & Password - Default), 'phone' (Mobile OTP), या 'create_credentials' (नया बनाएं)
+  const [authMode, setAuthMode] = useState<'credentials' | 'phone' | 'create_credentials'>('credentials');
+
+  // Credentials State (MUST BE EMPTY BY DEFAULT - NO AUTOFILL)
+  const [loginUserId, setLoginUserId] = useState<string>('');
+  const [loginPassword, setLoginPassword] = useState<string>('');
+  const [showLoginPassword, setShowLoginPassword] = useState<boolean>(false);
+
+  // Phone/OTP फ़ॉर्म स्टेप्स: 'phone' -> 'otp' -> 'register' -> 'pending'
   const [step, setStep] = useState<'phone' | 'otp' | 'register' | 'pending'>('phone');
-  const [phone, setPhone] = useState<string>(SUPER_ADMIN_PHONE); // Default: 8052361666
-  const [activePortalType, setActivePortalType] = useState<'superadmin' | 'admin' | 'custom'>('superadmin');
+  // Phone MUST BE EMPTY BY DEFAULT - NO AUTOFILL
+  const [phone, setPhone] = useState<string>('');
+  const [activePortalType, setActivePortalType] = useState<'superadmin' | 'admin' | 'custom'>('custom');
   const [otp, setOtp] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [recaptchaVerifier, setRecaptchaVerifier] = useState<any>(null);
@@ -70,6 +84,32 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({ onSuccess, onCan
       setStep('pending');
     }
   }, [adminProfile, isApproved]);
+
+  // त्वरित User ID व पासवर्ड द्वारा लॉगिन हैंडलर
+  const handleCredentialsLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanId = loginUserId.trim();
+    const cleanPass = loginPassword.trim();
+
+    if (!cleanId) {
+      toast.error('कृपया अपना User ID / उपयोगकर्ता नाम दर्ज करें!');
+      return;
+    }
+    if (!cleanPass) {
+      toast.error('कृपया अपना पासवर्ड दर्ज करें!');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await loginWithCredentials(cleanId, cleanPass);
+      if (res.success) {
+        if (onSuccess) onSuccess();
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // क्विक रोल टॉगल
   const handleSelectRolePreset = (type: 'superadmin' | 'admin') => {
@@ -228,106 +268,137 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({ onSuccess, onCan
           )}
         </div>
         <p className="text-xs text-blue-100 mt-2">
-          अधिकृत मोबाइल नंबर (8052361666 / 8948165666) पर सुरक्षित OTP द्वारा प्रशासनिक प्रवेश
+          अधिकृत User ID व पासवर्ड अथवा OTP द्वारा सुरक्षित प्रशासनिक प्रवेश
         </p>
       </div>
 
       {/* Body Content */}
       <div className="p-6 sm:p-8 space-y-6">
-        {/* STEP 1: MOBILE NUMBER INPUT */}
-        {step === 'phone' && (
-          <form onSubmit={handleSendOtp} className="space-y-5">
-            {/* Quick Role Switcher Buttons */}
-            <div className="space-y-1.5">
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">
-                लॉगिन प्रकार चुनें (Select Login Portal)
-              </label>
-              <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-2xl">
-                <button
-                  type="button"
-                  onClick={() => handleSelectRolePreset('superadmin')}
-                  className={`py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
-                    activePortalType === 'superadmin' && phone === SUPER_ADMIN_PHONE
-                      ? 'bg-amber-400 text-blue-950 shadow-md ring-2 ring-amber-300'
-                      : 'text-slate-700 hover:bg-white/60'
-                  }`}
-                >
-                  <Crown className="w-4 h-4 text-amber-700" />
-                  <div className="text-left">
-                    <span className="block leading-tight">Super Admin</span>
-                    <span className="text-[10px] block opacity-80 font-mono">8052361666</span>
-                  </div>
-                </button>
+        {/* Login Method Tabs */}
+        <div className="flex p-1 bg-slate-100 rounded-2xl border border-slate-200 text-xs font-bold gap-1">
+          <button
+            type="button"
+            onClick={() => setAuthMode('credentials')}
+            className={`flex-1 py-2 px-2.5 rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer text-[11px] sm:text-xs ${
+              authMode === 'credentials'
+                ? 'bg-blue-900 text-white shadow-md'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <KeyRound className={`w-3.5 h-3.5 ${authMode === 'credentials' ? 'text-amber-300' : 'text-slate-400'}`} />
+            <span>यूज़र आईडी / पासवर्ड</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setAuthMode('phone');
+              setStep('phone');
+            }}
+            className={`flex-1 py-2 px-2.5 rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer text-[11px] sm:text-xs ${
+              authMode === 'phone'
+                ? 'bg-blue-900 text-white shadow-md'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Phone className={`w-3.5 h-3.5 ${authMode === 'phone' ? 'text-amber-300' : 'text-slate-400'}`} />
+            <span>मोबाइल OTP</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setAuthMode('create_credentials')}
+            className={`flex-1 py-2 px-2.5 rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer text-[11px] sm:text-xs ${
+              authMode === 'create_credentials'
+                ? 'bg-blue-900 text-white shadow-md'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <UserPlus className={`w-3.5 h-3.5 ${authMode === 'create_credentials' ? 'text-amber-300' : 'text-slate-400'}`} />
+            <span>नया बनाएं</span>
+          </button>
+        </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleSelectRolePreset('admin')}
-                  className={`py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
-                    activePortalType === 'admin' && phone === ADMIN_PHONE
-                      ? 'bg-blue-800 text-white shadow-md ring-2 ring-blue-700'
-                      : 'text-slate-700 hover:bg-white/60'
-                  }`}
-                >
-                  <ShieldCheck className="w-4 h-4 text-blue-300" />
-                  <div className="text-left">
-                    <span className="block leading-tight">Admin Portal</span>
-                    <span className="text-[10px] block opacity-80 font-mono">8948165666</span>
-                  </div>
-                </button>
+        {/* ================= METHOD 1: USER ID & PASSWORD LOGIN (DEFAULT) ================= */}
+        {authMode === 'credentials' && (
+          <form onSubmit={handleCredentialsLogin} className="space-y-4" autoComplete="off">
+            <div className="text-center space-y-1">
+              <div className="w-12 h-12 bg-blue-50 text-blue-800 rounded-2xl flex items-center justify-center mx-auto mb-1 border border-blue-100">
+                <Lock className="w-6 h-6" />
               </div>
+              <h3 className="text-base font-black text-slate-900">
+                प्रशासनिक लॉगिन (Official Sign-In)
+              </h3>
+              <p className="text-xs text-slate-500">
+                सुपर एडमिन अथवा एडमिन User ID एवं पासवर्ड दर्ज करें
+              </p>
             </div>
 
+            {/* User ID Field - Empty by default, no autofill */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold text-slate-700">
-                  मोबाइल नंबर (Mobile Number)
-                </label>
-                <span className="text-[10px] font-bold text-blue-800">
-                  {phone === SUPER_ADMIN_PHONE
-                    ? '👑 सुपर एडमिन (श्री शैलेश प्रधान जी)'
-                    : phone === ADMIN_PHONE
-                    ? '🛡️ एडमिन (व्यवस्थापक)'
-                    : 'अन्य नंबर'}
-                </span>
-              </div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                यूज़र आईडी / उपयोगकर्ता नाम (User ID) *
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Phone className="w-5 h-5 text-blue-700" />
-                </div>
-                <div className="absolute inset-y-0 left-10 flex items-center text-xs font-bold text-slate-500 border-r border-slate-200 pr-2 my-2">
-                  +91
+                  <User className="w-4 h-4 text-blue-700" />
                 </div>
                 <input
-                  type="tel"
-                  maxLength={10}
-                  value={phone}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '');
-                    setPhone(val);
-                    if (val === SUPER_ADMIN_PHONE) setActivePortalType('superadmin');
-                    else if (val === ADMIN_PHONE) setActivePortalType('admin');
-                    else setActivePortalType('custom');
-                  }}
-                  placeholder="8052361666 या 8948165666"
-                  className="w-full pl-22 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-700 transition"
+                  type="text"
+                  autoComplete="off"
+                  value={loginUserId}
+                  onChange={(e) => setLoginUserId(e.target.value)}
+                  placeholder="उदा. superadmin या admin"
+                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-700 transition"
                   required
                 />
               </div>
             </div>
 
+            {/* Password Field - Empty by default, new-password autofill guard */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                गोपनीय पासवर्ड (Password) *
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <KeyRound className="w-4 h-4 text-blue-700" />
+                </div>
+                <input
+                  type={showLoginPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="पासवर्ड दर्ज करें"
+                  className="w-full pl-10 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-700 transition"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowLoginPassword(!showLoginPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* No Auto-fill Notification Badge */}
+            <div className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-center">
+              🔒 सुरक्षा निर्देश: क्रेडेंशियल्स स्वतः नहीं भरे गए हैं। कृपया अपना मान्य User ID व पासवर्ड दर्ज करें।
+            </div>
+
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3.5 bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-bold text-sm rounded-2xl shadow-lg shadow-blue-700/20 flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
+              className="w-full py-3.5 bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-bold text-xs rounded-2xl shadow-lg shadow-blue-700/20 flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
                   <RotateCw className="w-4 h-4 animate-spin" />
-                  <span>OTP भेजा जा रहा है...</span>
+                  <span>सत्यापन जारी है...</span>
                 </>
               ) : (
                 <>
-                  <span>OTP कोड प्राप्त करें ({phone})</span>
+                  <span>सुरक्षित लॉगिन करें (Sign In)</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -376,6 +447,134 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({ onSuccess, onCan
                 </button>
               </div>
             </div>
+
+            {/* Direct CTA: Create New Admin Credentials */}
+            <div className="pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setAuthMode('create_credentials')}
+                className="w-full py-2.5 px-3 bg-amber-50 hover:bg-amber-100 text-amber-950 font-bold text-xs rounded-xl border border-amber-300 transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+              >
+                <UserPlus className="w-4 h-4 text-amber-700" />
+                <span>नया प्रशासनिक Username व Password बनाएं (Create Account)</span>
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* ================= METHOD 3: CREATE ADMIN USERNAME & PASSWORD ================= */}
+        {authMode === 'create_credentials' && (
+          <CreateAdminCredentialsForm
+            onSuccess={(created) => {
+              setLoginUserId(created.userId);
+              if (onSuccess) onSuccess();
+            }}
+            onSwitchToLogin={(newId) => {
+              if (newId) setLoginUserId(newId);
+              setAuthMode('credentials');
+            }}
+          />
+        )}
+
+        {/* ================= METHOD 2: MOBILE OTP LOGIN ================= */}
+        {authMode === 'phone' && step === 'phone' && (
+          <form onSubmit={handleSendOtp} className="space-y-5" autoComplete="off">
+            {/* Quick Role Switcher Buttons */}
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">
+                नंबर चुनें (Select Preset Number)
+              </label>
+              <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-2xl">
+                <button
+                  type="button"
+                  onClick={() => handleSelectRolePreset('superadmin')}
+                  className={`py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
+                    activePortalType === 'superadmin' && phone === SUPER_ADMIN_PHONE
+                      ? 'bg-amber-400 text-blue-950 shadow-md ring-2 ring-amber-300'
+                      : 'text-slate-700 hover:bg-white/60'
+                  }`}
+                >
+                  <Crown className="w-4 h-4 text-amber-700" />
+                  <div className="text-left">
+                    <span className="block leading-tight">Super Admin</span>
+                    <span className="text-[10px] block opacity-80 font-mono">8052361666</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSelectRolePreset('admin')}
+                  className={`py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
+                    activePortalType === 'admin' && phone === ADMIN_PHONE
+                      ? 'bg-blue-800 text-white shadow-md ring-2 ring-blue-700'
+                      : 'text-slate-700 hover:bg-white/60'
+                  }`}
+                >
+                  <ShieldCheck className="w-4 h-4 text-blue-300" />
+                  <div className="text-left">
+                    <span className="block leading-tight">Admin Portal</span>
+                    <span className="text-[10px] block opacity-80 font-mono">8948165666</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-700">
+                  मोबाइल नंबर (Mobile Number)
+                </label>
+                <span className="text-[10px] font-bold text-blue-800">
+                  {phone === SUPER_ADMIN_PHONE
+                    ? '👑 सुपर एडमिन (श्री शैलेश प्रधान जी)'
+                    : phone === ADMIN_PHONE
+                    ? '🛡️ एडमिन (व्यवस्थापक)'
+                    : '10 अंकों का नंबर'}
+                </span>
+              </div>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Phone className="w-5 h-5 text-blue-700" />
+                </div>
+                <div className="absolute inset-y-0 left-10 flex items-center text-xs font-bold text-slate-500 border-r border-slate-200 pr-2 my-2">
+                  +91
+                </div>
+                <input
+                  type="tel"
+                  maxLength={10}
+                  autoComplete="off"
+                  value={phone}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    setPhone(val);
+                    if (val === SUPER_ADMIN_PHONE) setActivePortalType('superadmin');
+                    else if (val === ADMIN_PHONE) setActivePortalType('admin');
+                    else setActivePortalType('custom');
+                  }}
+                  placeholder="मोबाइल नंबर दर्ज करें"
+                  className="w-full pl-22 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-700 transition"
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-3.5 bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-bold text-sm rounded-2xl shadow-lg shadow-blue-700/20 flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
+            >
+              {isSubmitting ? (
+                <>
+                  <RotateCw className="w-4 h-4 animate-spin" />
+                  <span>OTP भेजा जा रहा है...</span>
+                </>
+              ) : (
+                <>
+                  <span>OTP कोड प्राप्त करें {phone ? `(+91 ${phone})` : ''}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
           </form>
         )}
 

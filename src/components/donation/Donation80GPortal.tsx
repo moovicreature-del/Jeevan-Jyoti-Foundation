@@ -28,6 +28,7 @@ import confetti from 'canvas-confetti';
 import toast from 'react-hot-toast';
 import { triggerDonationReceiptEmail } from '../../services/emailService';
 import { useDonationPaymentSettings } from '../../hooks/useDonationPaymentSettings';
+import { RealPaymentGatewayModal, DonorPaymentData } from './RealPaymentGatewayModal';
 
 interface Props {
   isOpen?: boolean;
@@ -65,6 +66,10 @@ export const Donation80GPortal: React.FC<Props> = ({
   const [txnRef, setTxnRef] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [copiedUpi, setCopiedUpi] = useState(false);
+
+  // Real Payment Gateway Modal state
+  const [showRealGateway, setShowRealGateway] = useState(false);
+  const [activePaymentData, setActivePaymentData] = useState<DonorPaymentData | null>(null);
 
   // Final amount calculation
   const currentAmount = customAmount ? parseInt(customAmount, 10) || 0 : selectedAmount;
@@ -125,7 +130,7 @@ export const Donation80GPortal: React.FC<Props> = ({
       return;
     }
 
-    if (!phone.trim() || phone.length < 10) {
+    if (!phone.trim() || phone.replace(/\D/g, '').length < 10) {
       toast.error('कृपया 10 अंकों का मान्य मोबाइल नंबर दर्ज करें!');
       return;
     }
@@ -150,85 +155,24 @@ export const Donation80GPortal: React.FC<Props> = ({
       return;
     }
 
-    setIsProcessing(true);
-    const toastId = toast.loading('भुगतान सत्यापित हो रहा है एवं दान रसीद जनरेट की जा रही है...');
+    // Build donor payment bundle and open real payment gateway modal
+    const donorPaymentData: DonorPaymentData = {
+      name: donorName.trim(),
+      fatherName: fatherName.trim() || undefined,
+      phone: phone.trim(),
+      email: email.trim(),
+      panNumber: panNumber.trim().toUpperCase() || undefined,
+      address: address.trim() || undefined,
+      city: city.trim() || 'Ghazipur',
+      district: 'ग़ाज़ीपुर (Ghazipur)',
+      state: 'उत्तर प्रदेश (Uttar Pradesh)',
+      pincode: pincode.trim() || '233001',
+      amount: currentAmount,
+      purpose: purpose
+    };
 
-    try {
-      // Simulate Gateway Handshake
-      await new Promise((r) => setTimeout(r, 1200));
-
-      const receiptYear = new Date().getFullYear();
-      const randomSeq = Math.floor(1000 + Math.random() * 9000);
-      const generatedReceiptNo = `JJF/DON/${receiptYear}/${randomSeq}`;
-      const generatedTxnRef = txnRef.trim() || `TXN${Date.now().toString().slice(-8)}`;
-
-      const newDonation: DonationRecord = {
-        id: generatedReceiptNo,
-        receiptNo: generatedReceiptNo,
-        donorName: donorName.trim(),
-        fatherName: fatherName.trim() || undefined,
-        panNumber: panNumber.trim().toUpperCase() || undefined,
-        email: email.trim(),
-        phone: phone.trim(),
-        address: address.trim() ? `${address.trim()}, ${city.trim()} - ${pincode.trim()}` : `${city.trim()} - ${pincode.trim()}`,
-        city: city.trim(),
-        amount: currentAmount,
-        amountInWords: amountToWordsIndian(currentAmount),
-        date: new Date().toISOString(),
-        donationType,
-        purpose: purpose,
-        purposeHindi: purpose,
-        paymentMode: paymentTab === 'upi' ? 'UPI / QR Payment' : paymentTab === 'razorpay' ? 'Cards / Netbanking (Razorpay)' : 'NEFT / Bank Transfer',
-        transactionRef: generatedTxnRef,
-        taxExemptEligible: false,
-        agree80GDeclaration: agreeDeclaration,
-        status: 'confirmed',
-        emailSent: true,
-        emailSentAt: new Date().toISOString()
-      };
-
-      // Trigger Automated Email with PDF Receipt in background
-      if (email.trim() && email.includes('@')) {
-        triggerDonationReceiptEmail({ donation: newDonation }).then((res) => {
-          if (res.success) {
-            toast.success(`📩 आधिकारिक दान रसीद PDF आपके ईमेल (${email.trim()}) पर भेज दी गई है!`, {
-              duration: 5000,
-              icon: '✉️'
-            });
-          }
-        }).catch((e) => {
-          console.warn('Background email dispatch notice:', e);
-        });
-      }
-
-      // Save to local storage for donor search
-      try {
-        const existing = localStorage.getItem('jjf_user_donations');
-        const list: DonationRecord[] = existing ? JSON.parse(existing) : [];
-        list.unshift(newDonation);
-        localStorage.setItem('jjf_user_donations', JSON.stringify(list));
-      } catch {
-        // Ignore
-      }
-
-      // Fire celebratory confetti
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
-
-      toast.success(
-        'दान सफल! आपकी आधिकारिक दान रसीद तैयार है एवं ईमेल प्रेषित की गई है।',
-        { id: toastId }
-      );
-      onDonationSuccess(newDonation);
-    } catch (err) {
-      console.error(err);
-      toast.error('त्रुटि आई, कृपया पुनः प्रयास करें।', { id: toastId });
-    } finally {
-      setIsProcessing(false);
-    }
+    setActivePaymentData(donorPaymentData);
+    setShowRealGateway(true);
   };
 
   if (!isOpen) return null;
@@ -738,17 +682,32 @@ export const Donation80GPortal: React.FC<Props> = ({
                 </div>
               )}
 
-              {/* Tab 2: Razorpay Card / Netbanking Simulation */}
+              {/* Tab 2: Card & Netbanking Real Gateway */}
               {paymentTab === 'razorpay' && (
-                <div className="p-4 bg-indigo-50/70 rounded-2xl border border-indigo-200 text-center space-y-3">
-                  <div className="flex justify-center items-center gap-2">
-                    <span className="px-2.5 py-1 bg-white rounded font-bold text-xs border border-indigo-200">Visa / Mastercard</span>
-                    <span className="px-2.5 py-1 bg-white rounded font-bold text-xs border border-indigo-200">RuPay</span>
-                    <span className="px-2.5 py-1 bg-white rounded font-bold text-xs border border-indigo-200">50+ Banks Netbanking</span>
+                <div className="p-4 bg-indigo-50/80 rounded-2xl border-2 border-indigo-300 text-center space-y-3">
+                  <div className="flex flex-wrap justify-center items-center gap-2">
+                    <span className="px-3 py-1 bg-white rounded-lg font-black text-xs border border-indigo-200 text-indigo-950 shadow-xs">
+                      💳 Visa / Mastercard / RuPay
+                    </span>
+                    <span className="px-3 py-1 bg-white rounded-lg font-black text-xs border border-indigo-200 text-indigo-950 shadow-xs">
+                      🏛️ SBI, HDFC, ICICI, PNB, BOB (50+ Banks)
+                    </span>
+                    <span className="px-3 py-1 bg-emerald-100 rounded-lg font-black text-xs text-emerald-900 border border-emerald-300 shadow-xs">
+                      🔒 3D Secure OTP Protection
+                    </span>
                   </div>
-                  <p className="text-xs text-gray-600 max-w-md mx-auto">
-                    'सुरक्षित भुगतान करें' बटन दबाते ही Razorpay सुरक्षित गेटवे सक्रिय होगा। सफल सत्यापन पर तुरंत आधिकारिक डिजिटल PDF रसीद प्राप्त होगी।
+                  <p className="text-xs text-gray-700 max-w-lg mx-auto font-medium">
+                    नीचे बटन दबाते ही <strong>संस्था का अधिकृत बैंक खाता विवरण</strong> खुलेगा। आगे बढ़ने पर आप डेबिट/क्रेडिट कार्ड या इंटरनेट बैंकिंग चुनकर बैंक OTP सत्यापन द्वारा वास्तविक भुगतान कर सकेंगे और तुरंत आधिकारिक दान प्रमाण पत्र प्राप्त होगा।
                   </p>
+                  <button
+                    type="button"
+                    onClick={handleSubmitDonation}
+                    className="px-6 py-3 bg-gradient-to-r from-indigo-700 via-[#0024B8] to-blue-800 hover:from-indigo-800 text-white font-black text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all inline-flex items-center gap-2 cursor-pointer"
+                  >
+                    <CreditCard className="w-4 h-4 text-amber-300" />
+                    <span>डेबिट/क्रेडिट कार्ड व नेट बैंकिंग गेटवे खोलें (Proceed to Pay)</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
                 </div>
               )}
 
@@ -762,6 +721,17 @@ export const Donation80GPortal: React.FC<Props> = ({
                     <div><strong>IFSC कोड:</strong> <span className="font-mono font-bold">{paymentSettings.bankIfsc || FOUNDATION_INFO.bankIfsc}</span></div>
                     <div><strong>शाखा:</strong> {paymentSettings.bankBranch || FOUNDATION_INFO.bankBranch}</div>
                     <div><strong>खाता प्रकार:</strong> Current Account</div>
+                  </div>
+                  <div className="pt-2 text-center">
+                    <button
+                      type="button"
+                      onClick={handleSubmitDonation}
+                      className="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl inline-flex items-center gap-2 cursor-pointer shadow-xs"
+                    >
+                      <Building2 className="w-4 h-4 text-amber-300" />
+                      <span>बैंक खाता विवरण देखें व ऑनलाइन भुगतान विकल्प खोलें</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               )}
@@ -778,7 +748,7 @@ export const Donation80GPortal: React.FC<Props> = ({
                 <span>
                   {isProcessing
                     ? 'रसीद तैयार हो रही है...'
-                    : `₹${currentAmount.toLocaleString('en-IN')} दान करें एवं तुरंत आधिकारिक रसीद प्राप्त करें`}
+                    : `₹${currentAmount.toLocaleString('en-IN')} दान करें • बैंक खाता विवरण व भुगतान गेटवे खोलें`}
                 </span>
                 <ArrowRight className="w-5 h-5" />
               </button>
@@ -791,6 +761,20 @@ export const Donation80GPortal: React.FC<Props> = ({
           </form>
         </div>
       </div>
+
+      {/* Real Payment Gateway Modal */}
+      {showRealGateway && activePaymentData && (
+        <RealPaymentGatewayModal
+          isOpen={showRealGateway}
+          onClose={() => setShowRealGateway(false)}
+          donorData={activePaymentData}
+          onPaymentSuccess={(donation) => {
+            setShowRealGateway(false);
+            onClose();
+            onDonationSuccess(donation);
+          }}
+        />
+      )}
     </div>
   );
 };

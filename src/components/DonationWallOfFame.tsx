@@ -241,7 +241,7 @@ export const DonationWallOfFame: React.FC<DonationWallProps> = ({
                     {isHindi ? 'दानदाता सहयोग विवरण एवं लेखा पंजीका' : 'Official Donors & Contribution Ledger'}
                   </h3>
                   <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-200">
-                    80G Tax Exemption Certified
+                    Official Donation Certified
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
@@ -376,7 +376,7 @@ export const DonationWallOfFame: React.FC<DonationWallProps> = ({
                         ₹ {totalFilteredAmount.toLocaleString('en-IN')}
                       </td>
                       <td colSpan={4} className="py-3 px-3 text-center text-slate-500 text-[11px] font-normal">
-                        धारा 80G आयकर छूट अंतर्गत अधिकृत | जीवन ज्योति फाउंडेशन गाजीपुर
+                        आधिकारिक दान रसीद व सम्मान पत्र | जीवन ज्योति फाउंडेशन गाजीपुर
                       </td>
                     </tr>
                   </tfoot>

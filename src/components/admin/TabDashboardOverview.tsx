@@ -154,7 +154,7 @@ export const TabDashboardOverview: React.FC<TabDashboardOverviewProps> = ({
               प्रमाण पत्र जारीकरण एवं पंजीकरण पाइपलाइन एनालिटिक्स
             </h2>
             <p className="text-xs text-slate-300">
-              माह-वार व वर्ष-वार जारी किए गए प्रमाण पत्रों की लाइव सांख्यिकी, 80G टैक्स रसीदें एवं फनल स्थिति देखें।
+              माह-वार व वर्ष-वार जारी किए गए प्रमाण पत्रों की लाइव सांख्यिकी, दान रसीदें एवं फनल स्थिति देखें।
             </p>
           </div>
         </div>
@@ -181,14 +181,14 @@ export const TabDashboardOverview: React.FC<TabDashboardOverviewProps> = ({
                 FIRESTORE DATA BACKUP
               </span>
               <span className="text-xs text-emerald-200">
-                दानदाता 80G + स्वयंसेवक + प्रमाण पत्र
+                दानदाता + स्वयंसेवक + प्रमाण पत्र
               </span>
             </div>
             <h2 className="text-base font-black text-white mt-0.5">
               फायरस्टोर डेटाबेस बैकअप (JSON Export & Download)
             </h2>
             <p className="text-xs text-slate-300">
-              सभी 80G दान रिकॉर्ड, स्वयंसेवक प्रोफाइल व जारी प्रमाण पत्रों का पूर्ण संरचित JSON बैकअप तुरंत डाउनलोड करें।
+              सभी दान रिकॉर्ड, स्वयंसेवक प्रोफाइल व जारी प्रमाण पत्रों का पूर्ण संरचित JSON बैकअप तुरंत डाउनलोड करें।
             </p>
           </div>
         </div>

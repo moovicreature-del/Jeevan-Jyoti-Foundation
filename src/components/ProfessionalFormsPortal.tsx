@@ -40,6 +40,7 @@ import { INITIAL_VOLUNTEERS, INITIAL_TASKS } from '../data/taskData';
 import { DONORS_DATA } from '../data/donorsData';
 import { INITIAL_FESTIVAL_GREETINGS } from '../data/festivalsData';
 import { formatCertificateNumber } from '../utils/certificateUtils';
+import { RealPaymentGatewayModal, DonorPaymentData } from './donation/RealPaymentGatewayModal';
 
 interface Props {
   selectedTab?: FormTab;
@@ -185,7 +186,6 @@ export const ProfessionalFormsPortal: React.FC<Props> = ({
   // 5. DONATION FORM STATE
   // ==========================================
   const [donPhoto, setDonPhoto] = useState<string>('');
-  const [donRequire80G, setDonRequire80G] = useState<boolean>(false); // 80G is optional
   const [donName, setDonName] = useState('');
   const [donFather, setDonFather] = useState('');
   const [donMobile, setDonMobile] = useState('');
@@ -204,6 +204,8 @@ export const ProfessionalFormsPortal: React.FC<Props> = ({
   const [donDeclaration, setDonDeclaration] = useState(false);
   const [donError, setDonError] = useState<string | null>(null);
   const [donSuccess, setDonSuccess] = useState(false);
+  const [showDonationGateway, setShowDonationGateway] = useState(false);
+  const [activeDonorPaymentData, setActiveDonorPaymentData] = useState<DonorPaymentData | null>(null);
 
   // Handle DOB change for age calculation
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -534,29 +536,54 @@ export const ProfessionalFormsPortal: React.FC<Props> = ({
       return;
     }
 
-    const newDonation: DonationRecord = {
-      id: formatCertificateNumber('DON' as any, donDate || new Date()),
-      donorName: donName.trim(),
-      amount: finalAmount,
-      date: donDate || getTodayDateString(),
-      purpose: donPurpose,
-      purposeHindi: 'गरीब बच्चों की शिक्षा व जन-कल्याण',
+    // Prepare donor payment data
+    const donorData: DonorPaymentData = {
+      name: donName.trim(),
+      fatherName: donFather.trim() || undefined,
+      phone: donMobile.trim(),
+      email: donEmail.trim() || undefined,
       panNumber: donPan.trim() || undefined,
+      address: donAddress.trim() || undefined,
+      city: donDistrict,
       district: donDistrict,
       state: donState,
-      city: donDistrict,
-      country: 'India',
-      wardOrVillage: donAddress.trim() ? `${donAddress.trim()}${donFather.trim() ? ` (पिता/पति: ${donFather.trim()})` : ''}` : undefined,
-      paymentMode: donPaymentMode,
-      transactionRef: `UPI/JJF/${Date.now().toString().slice(-8)}`,
-      taxExemptEligible: false,
+      pincode: donPin || '233001',
+      amount: finalAmount,
+      purpose: donPurpose,
       photoUrl: donPhoto
     };
 
-    setDonSuccess(true);
-    setTimeout(() => {
-      onOpenDonationCert(newDonation);
-    }, 600);
+    if (donPaymentMode === 'Cash') {
+      // Direct Cash / Offline Cheque receipt
+      const newDonation: DonationRecord = {
+        id: formatCertificateNumber('DON' as any, donDate || new Date()),
+        donorName: donName.trim(),
+        amount: finalAmount,
+        date: donDate || getTodayDateString(),
+        purpose: donPurpose,
+        purposeHindi: 'गरीब बच्चों की शिक्षा व जन-कल्याण',
+        panNumber: donPan.trim() || undefined,
+        district: donDistrict,
+        state: donState,
+        city: donDistrict,
+        country: 'India',
+        wardOrVillage: donAddress.trim() ? `${donAddress.trim()}${donFather.trim() ? ` (पिता/पति: ${donFather.trim()})` : ''}` : undefined,
+        paymentMode: 'Direct Cash / Cheque',
+        transactionRef: `CASH/OFFLINE/${Date.now().toString().slice(-8)}`,
+        taxExemptEligible: false,
+        photoUrl: donPhoto
+      };
+
+      setDonSuccess(true);
+      setTimeout(() => {
+        onOpenDonationCert(newDonation);
+      }, 600);
+      return;
+    }
+
+    // For Card, NetBanking, UPI, PhonePe, Google Pay: Open Real Payment Gateway Modal!
+    setActiveDonorPaymentData(donorData);
+    setShowDonationGateway(true);
   };
 
   return (
@@ -2416,6 +2443,20 @@ export const ProfessionalFormsPortal: React.FC<Props> = ({
           </div>
         )}
       </div>
+
+      {/* Real Payment Gateway Modal for Online Donations (Card, NetBanking, PhonePe, GPay, UPI) */}
+      {showDonationGateway && activeDonorPaymentData && (
+        <RealPaymentGatewayModal
+          isOpen={showDonationGateway}
+          onClose={() => setShowDonationGateway(false)}
+          donorData={activeDonorPaymentData}
+          onPaymentSuccess={(newDonation) => {
+            setShowDonationGateway(false);
+            setDonSuccess(true);
+            onOpenDonationCert(newDonation);
+          }}
+        />
+      )}
     </section>
   );
 };

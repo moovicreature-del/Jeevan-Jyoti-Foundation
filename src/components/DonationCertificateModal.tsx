@@ -49,18 +49,18 @@ export const DonationCertificateModal: React.FC<Props> = ({ donation, onClose })
     wardOrVillage: donation.wardOrVillage || donation.city || 'गाज़ीपुर (Ghazipur)'
   });
 
-  const certNumber = formatCertificateNumber('80G', donation.date || new Date(), donation.id);
+  const certNumber = formatCertificateNumber('DON', donation.date || new Date(), donation.id);
   const tier = getDonorTier(donation.amount);
   const certMatter = getDonationCertMatter(certLanguage);
 
-  // Auto-save issued 80G donation certificate to database & local registry
+  // Auto-save issued donation certificate to database & local registry
   useEffect(() => {
     const cleanPhone = (donorPhone || donation.phone || '8052361666').replace(/[^0-9]/g, '').slice(-10);
     saveCertificateToRegistry({
       id: certNumber,
       type: 'donation_80g',
-      titleHindi: '80G आयकर दान रसीद व सम्मान पत्र',
-      titleEnglish: '80G Tax Exemption Receipt & Citation',
+      titleHindi: 'दान रसीद एवं सम्मान पत्र',
+      titleEnglish: 'Donation Receipt & Certificate of Honor',
       recipientName: donation.donorName,
       fatherOrHusbandName: donation.fatherName || 'दानदाता एवं शुभचिंतक',
       phone: cleanPhone,
@@ -68,7 +68,7 @@ export const DonationCertificateModal: React.FC<Props> = ({ donation, onClose })
       amount: donation.amount,
       categoryOrPurpose: donation.purposeHindi || donation.purpose || 'मानव सेवा व शिक्षा योगदान',
       photoUrl: donorPhotoUrl || donation.photoUrl,
-      details: `दान राशि: ₹${donation.amount.toLocaleString('en-IN')} (${tier.nameHindi}) • 80G URN अधिकृत`,
+      details: `दान राशि: ₹${donation.amount.toLocaleString('en-IN')} (${tier.nameHindi}) • अधिकृत रसीद`,
       status: 'certified',
       rawDonation: {
         ...donation,
@@ -100,14 +100,14 @@ export const DonationCertificateModal: React.FC<Props> = ({ donation, onClose })
 
   const validateRequirements = (): boolean => {
     if (!donorPhotoUrl) {
-      setPhotoError('⚠️ दानदाता सम्मान पत्र एवं 80G रसीद हेतु दानदाता की फोटो / संस्था लोगो अपलोड करना अनिवार्य है।');
+      setPhotoError('⚠️ दानदाता सम्मान पत्र एवं रसीद हेतु दानदाता की फोटो / संस्था लोगो अपलोड करना अनिवार्य है।');
       setTimeout(() => {
         fileInputRef.current?.click();
       }, 150);
       return false;
     }
     if (!donorAddress.country || !donorAddress.state || !donorAddress.district || !donorAddress.block || !donorAddress.wardOrVillage?.trim()) {
-      setPhotoError('⚠️ 80G प्रमाण पत्र हेतु देश, राज्य, जिला, ब्लॉक व वार्ड/ग्राम का चयन/दर्ज करना अनिवार्य है।');
+      setPhotoError('⚠️ दान सम्मान पत्र हेतु देश, राज्य, जिला, ब्लॉक व वार्ड/ग्राम का चयन/दर्ज करना अनिवार्य है।');
       setShowAddressEdit(true);
       return false;
     }
@@ -146,7 +146,7 @@ export const DonationCertificateModal: React.FC<Props> = ({ donation, onClose })
     if (!certRef.current || downloading) return;
     setDownloading('jpg');
     try {
-      const fileName = `80G_${tier.key.toUpperCase()}_Receipt_${donation.donorName.replace(/\s+/g, '_')}`;
+      const fileName = `DON_${tier.key.toUpperCase()}_Receipt_${donation.donorName.replace(/\s+/g, '_')}`;
       await exportElementAsJpg(certRef.current, fileName, { quality: 0.98 });
     } finally {
       setDownloading(null);
@@ -157,7 +157,7 @@ export const DonationCertificateModal: React.FC<Props> = ({ donation, onClose })
     if (!certRef.current || downloading) return;
     setDownloading('png');
     try {
-      const fileName = `80G_${tier.key.toUpperCase()}_Receipt_${donation.donorName.replace(/\s+/g, '_')}`;
+      const fileName = `DON_${tier.key.toUpperCase()}_Receipt_${donation.donorName.replace(/\s+/g, '_')}`;
       await exportElementAsPng(certRef.current, fileName, { backgroundColor: '#FFFFFF' });
     } finally {
       setDownloading(null);
@@ -168,7 +168,7 @@ export const DonationCertificateModal: React.FC<Props> = ({ donation, onClose })
     if (!certRef.current || downloading) return;
     setDownloading('pdf');
     try {
-      const fileName = `80G_${tier.key.toUpperCase()}_Receipt_${donation.donorName.replace(/\s+/g, '_')}_A4`;
+      const fileName = `DON_${tier.key.toUpperCase()}_Receipt_${donation.donorName.replace(/\s+/g, '_')}_A4`;
       await exportElementAsPdf(certRef.current, fileName, { orientation: 'landscape' });
     } finally {
       setDownloading(null);
@@ -184,10 +184,10 @@ export const DonationCertificateModal: React.FC<Props> = ({ donation, onClose })
             <span className="text-2xl">{tier.symbol}</span>
             <div>
               <h3 className="font-bold text-gray-900 text-lg leading-tight">
-                80G दान रसीद एवं {tier.name} सम्मान पत्र
+                दान रसीद एवं {tier.name} सम्मान पत्र
               </h3>
               <p className="text-xs text-gray-500 font-medium">
-                Official 80G Tax Exemption Receipt & {tier.name} Certificate
+                Official Donation Receipt & {tier.name} Certificate
               </p>
             </div>
           </div>
@@ -229,7 +229,7 @@ export const DonationCertificateModal: React.FC<Props> = ({ donation, onClose })
                 setShareModalOpen(true);
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs sm:text-sm font-bold transition-colors cursor-pointer shadow-xs"
-              title="Send 80G Receipt to WhatsApp Number"
+              title="Send Donation Receipt to WhatsApp Number"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span>WhatsApp</span>
@@ -243,7 +243,7 @@ export const DonationCertificateModal: React.FC<Props> = ({ donation, onClose })
                 setShareModalOpen(true);
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0024B8] hover:bg-blue-800 text-white rounded-lg text-xs sm:text-sm font-bold transition-colors cursor-pointer shadow-xs"
-              title="Send 80G Receipt to Email Address"
+              title="Send Donation Receipt to Email Address"
             >
               <Mail className="w-3.5 h-3.5" />
               <span>ईमेल (Email)</span>
@@ -284,7 +284,7 @@ export const DonationCertificateModal: React.FC<Props> = ({ donation, onClose })
               className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#8B0000] hover:bg-[#700000] text-white rounded-lg text-sm font-semibold transition-colors shadow-xs cursor-pointer disabled:opacity-50"
             >
               <FileText className="w-4 h-4" />
-              <span>{downloading === 'pdf' ? 'PDF तैयार...' : 'PDF (80G रसीद)'}</span>
+              <span>{downloading === 'pdf' ? 'PDF तैयार...' : 'PDF (दान रसीद)'}</span>
             </button>
             <button
               onClick={onClose}
@@ -306,7 +306,7 @@ export const DonationCertificateModal: React.FC<Props> = ({ donation, onClose })
             onPhotoRemove={() => setDonorPhotoUrl('')}
             required={true}
             label="दानदाता / भामाशाह का फोटो (Donor Photo - कैमरा या गैलरी)"
-            subLabel="80G रसीद एवं सम्मान पत्र पर फोटो मुद्रित करने हेतु (गैलरी से चुनें या लाइव कैमरा से खींचें)"
+            subLabel="दान रसीद एवं सम्मान पत्र पर फोटो मुद्रित करने हेतु (गैलरी से चुनें या लाइव कैमरा से खींचें)"
           />
         </div>
 
@@ -365,7 +365,7 @@ export const DonationCertificateModal: React.FC<Props> = ({ donation, onClose })
               <div className="flex items-start justify-between gap-4 border-b-2 border-amber-300/80 pb-3 relative z-10">
                 <div className="text-left font-sans text-[11px] text-black font-extrabold space-y-0.5 pt-1">
                   <div><strong className="text-[#8B0000] font-black">{certMatter.regNoLabel}:</strong> {FOUNDATION_INFO.regNo}</div>
-                  <div><strong className="text-[#8B0000] font-black">{certMatter.urn80GLabel}:</strong> {FOUNDATION_INFO.urn80G}</div>
+                  <div><strong className="text-[#8B0000] font-black">{certMatter.nitiLabel}:</strong> {FOUNDATION_INFO.nitiAayogUid}</div>
                   <div><strong className="text-[#8B0000] font-black">{certMatter.urn12ALabel}:</strong> {FOUNDATION_INFO.urn10A}</div>
                 </div>
 
@@ -525,7 +525,7 @@ export const DonationCertificateModal: React.FC<Props> = ({ donation, onClose })
 
             {/* Single-Line Balanced Footer - 3 Pillars (Live Verify QR | Royal Official Seal | Authorised Signatory) */}
             <div className="border-t-2 border-amber-900/40 pt-[clamp(6px,1.2cqw,12px)] mt-2.5 grid grid-cols-3 items-center gap-[clamp(6px,1.5cqw,14px)] select-none">
-              {/* COLUMN 1 (LEFT): Official Live Verification QR Code & 80G Credentials */}
+              {/* COLUMN 1 (LEFT): Official Live Verification QR Code & Credentials */}
               <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-[#FFFDF8] border border-amber-300/80 rounded-lg sm:rounded-xl shadow-2xs text-left w-full max-w-[clamp(175px,30cqw,250px)]">
                 <div className="shrink-0 p-0.5 sm:p-1 bg-white border border-amber-400 rounded-md sm:rounded-lg shadow-2xs">
                   <CertificateVerificationQR
@@ -537,7 +537,7 @@ export const DonationCertificateModal: React.FC<Props> = ({ donation, onClose })
                 </div>
                 <div className="flex-1 min-w-0 font-sans text-[clamp(6.5pt,0.85cqw,8pt)] leading-tight space-y-0.5 text-gray-800">
                   <div className="text-[clamp(6pt,0.8cqw,7pt)] font-black text-[#8B0000] uppercase tracking-wider truncate">
-                    {certLanguage === 'hi' ? '80G सत्यापन क्यूआर' : '80G VERIFY QR'}
+                    {certLanguage === 'hi' ? 'सत्यापन क्यूआर कोड' : 'OFFICIAL VERIFY QR'}
                   </div>
                   <div className="truncate">
                     <strong className="text-black font-black">{certMatter.receiptNoLabel}:</strong>{' '}
@@ -548,7 +548,7 @@ export const DonationCertificateModal: React.FC<Props> = ({ donation, onClose })
                     <span className="font-mono text-black font-medium">{donation.panNumber || 'N/A'}</span>
                   </div>
                   <div className="text-[clamp(5.5pt,0.75cqw,6.5pt)] text-emerald-800 font-bold truncate">
-                    ✓ {certLanguage === 'hi' ? '80G कर छूट वैध' : '80G Tax Exempt'}
+                    ✓ {certLanguage === 'hi' ? 'आधिकारिक वैध रसीद' : 'Authenticated Receipt'}
                   </div>
                 </div>
               </div>
@@ -562,7 +562,7 @@ export const DonationCertificateModal: React.FC<Props> = ({ donation, onClose })
                   className="max-w-[72px] sm:max-w-[76px]"
                 />
                 <div className="text-[clamp(6pt,0.8cqw,7.5pt)] font-extrabold uppercase tracking-widest text-[#8B0000] mt-0.5 sm:mt-1 text-center truncate max-w-full">
-                  {certLanguage === 'hi' ? 'राजकीय मुहर / 80G प्रमाणित' : 'OFFICIAL SEAL • 80G APPROVED'}
+                  {certLanguage === 'hi' ? 'राजकीय मुहर / प्रमाणित' : 'OFFICIAL SEAL • VERIFIED'}
                 </div>
               </div>
 
@@ -597,14 +597,17 @@ export const DonationCertificateModal: React.FC<Props> = ({ donation, onClose })
           </div>
         </div>
 
-        {/* OTP Verification Modal for Secure 80G Certificate Download */}
+        {/* OTP Verification Modal for Secure Certificate Download */}
         <OtpVerificationModal
           isOpen={isOtpOpen}
           onClose={() => setIsOtpOpen(false)}
           phoneNumber={donorPhone}
           onSuccess={handleOtpVerified}
-          title="80G दान रसीद डाउनलोड - OTP सत्यापन"
-          subtitle="सुरक्षा सत्यापन: आयकर 80G रसीद डाउनलोड करने हेतु पंजीकृत मोबाइल नंबर पर OTP सत्यापित करें।"
+          certificateId={certNumber}
+          recipientName={donation.donorName}
+          certificateType="donation_80g"
+          title="दान रसीद डाउनलोड - OTP सत्यापन"
+          subtitle="सुरक्षा सत्यापन: दान रसीद डाउनलोड करने हेतु पंजीकृत मोबाइल नंबर पर भेजा गया 6-अंकीय OTP सत्यापित करें।"
         />
 
         {/* Send Certificate via WhatsApp & Email Modal */}
@@ -615,8 +618,8 @@ export const DonationCertificateModal: React.FC<Props> = ({ donation, onClose })
             defaultTab={shareModalTab}
             data={{
               certificateType: 'donation_80g',
-              titleHindi: 'धारा 80G आयकर दान प्रशस्ति पत्र व रसीद',
-              titleEnglish: '80G Tax Exemption Certificate of Appreciation',
+              titleHindi: 'आधिकारिक दान प्रशस्ति पत्र व रसीद',
+              titleEnglish: 'Official Donation Certificate of Appreciation',
               recipientName: donation.donorName,
               fatherName: donation.fatherName,
               certificateNo: certNumber,

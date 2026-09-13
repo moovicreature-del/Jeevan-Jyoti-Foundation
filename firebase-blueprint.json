@@ -127,6 +127,36 @@
         "preferredLanguage": { "type": "string", "description": "User preferred language (hi or en)" }
       },
       "required": ["email", "subscribedAt", "status"]
+    },
+    "adminCredentials": {
+      "title": "adminCredentials",
+      "description": "Configurable login credentials for Super Admin and Admin with password encryption hashes or secure tokens",
+      "type": "object",
+      "properties": {
+        "superAdmin": {
+          "type": "object",
+          "properties": {
+            "userId": { "type": "string" },
+            "password": { "type": "string" },
+            "name": { "type": "string" },
+            "mobile": { "type": "string" },
+            "updatedAt": { "type": "string" }
+          },
+          "required": ["userId", "password"]
+        },
+        "admin": {
+          "type": "object",
+          "properties": {
+            "userId": { "type": "string" },
+            "password": { "type": "string" },
+            "name": { "type": "string" },
+            "mobile": { "type": "string" },
+            "updatedAt": { "type": "string" }
+          },
+          "required": ["userId", "password"]
+        }
+      },
+      "required": ["superAdmin", "admin"]
     }
   },
   "firestore": {
@@ -141,6 +171,10 @@
     "/newsletterSubscribers/{subscriberId}": {
       "schema": { "$ref": "newsletterSubscribers" },
       "description": "Collection of verified newsletter subscriber emails for monthly NGO impact bulletins and annual welfare reports"
+    },
+    "/admin_credentials/{configId}": {
+      "schema": { "$ref": "adminCredentials" },
+      "description": "Secure storage of administrator and super administrator login user IDs and passwords"
     }
   }
 }

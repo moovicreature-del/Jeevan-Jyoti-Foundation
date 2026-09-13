@@ -492,7 +492,7 @@ export const AppLogoManager: React.FC = () => {
           }`}
         >
           <ShieldCheck className="w-4 h-4 text-blue-700" />
-          <span>1. संस्था मुख्य लोगो (Navbar, Certificates, 80G Receipts)</span>
+          <span>1. संस्था मुख्य लोगो (Navbar, Certificates, Donation Receipts)</span>
         </button>
 
         <button
@@ -522,7 +522,7 @@ export const AppLogoManager: React.FC = () => {
             <ShieldCheck className="w-5 h-5 text-blue-700 shrink-0 mt-0.5" />
             <div>
               <strong className="block font-bold">संस्था का मुख्य लोगो (Universal Brand Logo):</strong>
-              यह लोगो वेबसाइट के मुख्य नेवबार हेडर, फुटर, 80G दान पावती रसीदों, स्वयंसेवक व दानदाता प्रमाण पत्रों, डिजिटल मुहर (Stamp) तथा आधिकारिक लेटरहेड पर स्वतः दिखाई देता है।
+              यह लोगो वेबसाइट के मुख्य नेवबार हेडर, फुटर, दान पावती रसीदों, स्वयंसेवक व दानदाता प्रमाण पत्रों, डिजिटल मुहर (Stamp) तथा आधिकारिक लेटरहेड पर स्वतः दिखाई देता है।
             </div>
           </div>
 

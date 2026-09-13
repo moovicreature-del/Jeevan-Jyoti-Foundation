@@ -281,7 +281,7 @@ export const Donation80GReceiptView: React.FC<Props> = ({
         <div className="p-2 sm:p-6 bg-slate-100/90 overflow-x-auto print:p-0 print:bg-white">
           <div
             ref={receiptRef}
-            id="a4-80g-receipt"
+            id="a4-donation-receipt"
             className="w-full max-w-[780px] mx-auto bg-white rounded-2xl p-4 sm:p-7 relative select-none print:p-6 print:m-0 print:w-full print:max-w-none print:rounded-none"
             style={{
               border: '9px solid #8B0000',
@@ -605,10 +605,13 @@ export const Donation80GReceiptView: React.FC<Props> = ({
         <OtpVerificationModal
           isOpen={isOtpOpen}
           onClose={() => setIsOtpOpen(false)}
-          phoneNumber={donation.phone || '+91-8052361666'}
+          phoneNumber={donation.phone || ''}
           onSuccess={handleOtpVerified}
+          certificateId={receiptNumber}
+          recipientName={donation.donorName}
+          certificateType="donation_80g"
           title="दान रसीद - पंजीकृत मोबाइल OTP सत्यापन"
-          subtitle="सुरक्षा एवं आधिकारिक सत्यापन हेतु पंजीकृत मोबाइल नंबर पर 4-अंकीय OTP सत्यापन अनिवार्य है।"
+          subtitle="सुरक्षा एवं आधिकारिक सत्यापन हेतु दान पंजीकरण में दर्ज मोबाइल नंबर पर 6-अंकीय OTP सत्यापन अनिवार्य है।"
         />
       )}
     </div>

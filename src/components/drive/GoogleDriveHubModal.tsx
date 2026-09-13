@@ -273,7 +273,7 @@ export const GoogleDriveHubModal: React.FC<GoogleDriveHubModalProps> = ({ isOpen
           fileName,
           mimeType: 'application/json',
           parentId: activeFolder.id,
-          description: 'Official 80G Certified Donors Registry Backup - Jeevan Jyoti Foundation',
+          description: 'Official Certified Donors Registry Backup - Jeevan Jyoti Foundation',
         });
       } else if (type === 'volunteers') {
         // Generate clean CSV
@@ -563,7 +563,7 @@ export const GoogleDriveHubModal: React.FC<GoogleDriveHubModalProps> = ({ isOpen
                       <HeartHandshake className="w-4 h-4 text-red-600" />
                       <div>
                         <div>{isHindi ? 'दानदाता लेजर (JSON)' : 'Donors Ledger (JSON)'}</div>
-                        <div className="text-[10px] text-slate-400 font-normal">80G tax records backup</div>
+                        <div className="text-[10px] text-slate-400 font-normal">Donors records backup</div>
                       </div>
                     </button>
 

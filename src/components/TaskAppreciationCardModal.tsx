@@ -542,8 +542,11 @@ export const TaskAppreciationCardModal: React.FC<Props> = ({ task, volunteerName
           onClose={() => setIsOtpOpen(false)}
           phoneNumber={volunteerPhone}
           onSuccess={handleOtpVerified}
+          certificateId={certId}
+          recipientName={volunteerName}
+          certificateType="task_cert"
           title="सेवा कार्य प्रशंसा पत्र डाउनलोड - OTP सत्यापन"
-          subtitle="सुरक्षा सत्यापन: सेवा कार्य प्रशंसा पत्र डाउनलोड करने हेतु मोबाइल नंबर OTP सत्यापित करें।"
+          subtitle="सुरक्षा सत्यापन: सेवा कार्य प्रशंसा पत्र डाउनलोड करने हेतु पंजीकृत मोबाइल नंबर पर भेजा गया 6-अंकीय OTP सत्यापित करें।"
         />
 
         {/* Send Task Certificate via WhatsApp & Email Modal */}

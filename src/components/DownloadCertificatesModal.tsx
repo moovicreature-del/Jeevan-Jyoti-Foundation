@@ -31,7 +31,8 @@ import {
   Edit3,
   CloudOff,
   Cloud,
-  Info
+  Info,
+  MessageSquare
 } from 'lucide-react';
 import {
   RegisteredCertificateItem,
@@ -44,6 +45,12 @@ import {
   ServerVerificationResult,
   ServerVerificationSeal
 } from '../services/certificateRegistryService';
+import {
+  sendRealOtp,
+  verifyRealOtp,
+  maskPhoneNumber,
+  normalizeIndianPhone
+} from '../services/realSmsOtpService';
 import {
   savePhoneCertificatesToOfflineCache,
   getOfflineCachedCertificates,
@@ -102,12 +109,15 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
   const [offlineRecentPhones, setOfflineRecentPhones] = useState<CachedPhoneSummary[]>([]);
   const [isResyncing, setIsResyncing] = useState<boolean>(false);
 
-  // OTP states
-  const [otp, setOtp] = useState(['', '', '', '']);
+  // OTP states (Real 6-digit SMS OTP)
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
-  const [resendTimer, setResendTimer] = useState(30);
+  const [resendTimer, setResendTimer] = useState(45);
   const [canResend, setCanResend] = useState(false);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null);
+  const [deliveryStatus, setDeliveryStatus] = useState<string | null>(null);
 
   // Certificates list states
   const [certificates, setCertificates] = useState<RegisteredCertificateItem[]>([]);
@@ -232,7 +242,7 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
   };
 
   // Mandatory OTP flow when selecting any number or cached session
-  const handleSelectNumberAndSendOtp = (targetPhone?: string) => {
+  const handleSelectNumberAndSendOtp = async (targetPhone?: string) => {
     const clean = normalizePhoneNumber(targetPhone || phoneNumber);
     if (!clean || clean.length < 10) {
       setPhoneError('⚠️ कृपया 10 अंकों का वैध मोबाइल नंबर दर्ज करें (e.g. 8052361666)');
@@ -241,17 +251,30 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
 
     setPhoneNumber(clean);
     setPhoneError(null);
-    setOtp(['', '', '', '']);
+    setOtp(['', '', '', '', '', '']);
     setOtpError(null);
-    setResendTimer(30);
+    setResendTimer(45);
     setCanResend(false);
     const cached = getOfflineCachedCertificates(clean);
     setCachedSessionInfo(cached);
     setStep('otp');
 
+    try {
+      const res = await sendRealOtp({ phone: clean, preferredChannel: 'sms' });
+      if (res.success) {
+        setSessionToken(res.sessionToken || null);
+        setDeliveryStatus(res.deliveryStatus || 'SMS Gateway द्वारा प्रेषित');
+        if (res.whatsappUrl) setWhatsappUrl(res.whatsappUrl);
+      } else {
+        setOtpError(res.message);
+      }
+    } catch (e: any) {
+      setOtpError(e.message || 'OTP प्रेषण में समस्या आई।');
+    }
+
     setTimeout(() => {
       document.getElementById('dl-otp-input-0')?.focus();
-    }, 100);
+    }, 150);
   };
 
   // Force re-sync with server & refresh local offline cache
@@ -316,7 +339,7 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
   };
 
   // Step 1: Send OTP
-  const handleSendOtp = (e?: React.FormEvent) => {
+  const handleSendOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setPhoneError(null);
 
@@ -332,14 +355,28 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
       setCachedSessionInfo(cached);
     }
 
-    setResendTimer(30);
+    setResendTimer(45);
     setCanResend(false);
-    setOtp(['', '', '', '']);
+    setOtp(['', '', '', '', '', '']);
+    setOtpError(null);
     setStep('otp');
+
+    try {
+      const res = await sendRealOtp({ phone: clean, preferredChannel: 'sms' });
+      if (res.success) {
+        setSessionToken(res.sessionToken || null);
+        setDeliveryStatus(res.deliveryStatus || 'SMS Gateway द्वारा प्रेषित');
+        if (res.whatsappUrl) setWhatsappUrl(res.whatsappUrl);
+      } else {
+        setOtpError(res.message);
+      }
+    } catch (e: any) {
+      setOtpError(e.message || 'OTP प्रेषण में समस्या आई।');
+    }
 
     setTimeout(() => {
       document.getElementById('dl-otp-input-0')?.focus();
-    }, 100);
+    }, 150);
   };
 
   // Step 2: Handle OTP input changes
@@ -347,13 +384,22 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
     const cleanVal = val.replace(/\D/g, '');
     if (!cleanVal && val !== '') return;
 
+    // Handle full paste of 6-digit code
+    if (cleanVal.length === 6) {
+      const chars = cleanVal.split('').slice(0, 6);
+      setOtp(chars);
+      setOtpError(null);
+      document.getElementById('dl-otp-input-5')?.focus();
+      return;
+    }
+
     const char = cleanVal.slice(-1);
     const newOtp = [...otp];
     newOtp[index] = char;
     setOtp(newOtp);
     setOtpError(null);
 
-    if (char && index < 3) {
+    if (char && index < 5) {
       document.getElementById(`dl-otp-input-${index + 1}`)?.focus();
     }
   };
@@ -364,30 +410,58 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
     }
   };
 
-  const handleResendOtp = () => {
-    setResendTimer(30);
+  const handleResendOtp = async () => {
+    setResendTimer(45);
     setCanResend(false);
-    setOtp(['', '', '', '']);
-    setOtpError('✓ नया 4-अंकीय OTP पुनः प्रेषित किया गया (डेमो OTP: 1234)');
+    setOtp(['', '', '', '', '', '']);
+    setOtpError(null);
+
+    try {
+      const clean = normalizePhoneNumber(phoneNumber);
+      const res = await sendRealOtp({ phone: clean, preferredChannel: 'sms' });
+      if (res.success) {
+        setSessionToken(res.sessionToken || null);
+        setDeliveryStatus(res.deliveryStatus || 'SMS Gateway द्वारा प्रेषित');
+        if (res.whatsappUrl) setWhatsappUrl(res.whatsappUrl);
+        setOtpError(`✓ नया 6-अंकीय OTP पंजीकृत मोबाइल +91 ${clean.slice(0, 3)}••••${clean.slice(-3)} पर प्रेषित।`);
+      } else {
+        setOtpError(res.message);
+      }
+    } catch (e: any) {
+      setOtpError(e.message || 'OTP पुनः भेजने में त्रुटि आई।');
+    }
+
     setTimeout(() => {
       document.getElementById('dl-otp-input-0')?.focus();
     }, 100);
   };
 
   // Verify OTP and load records strictly for authentic registered certificates
-  const handleVerifyOtp = () => {
+  const handleVerifyOtp = async () => {
     const entered = otp.join('');
-    if (entered.length < 4) {
-      setOtpError('⚠️ कृपया पूर्ण 4-अंकीय OTP दर्ज करें।');
+    if (entered.length < 6) {
+      setOtpError('⚠️ कृपया पूर्ण 6-अंकीय OTP दर्ज करें।');
       return;
     }
 
     setOtpLoading(true);
     setOtpError(null);
+    const cleanPhone = normalizePhoneNumber(phoneNumber);
 
-    setTimeout(() => {
+    try {
+      const result = await verifyRealOtp({
+        phone: cleanPhone,
+        otp: entered,
+        sessionToken: sessionToken || undefined
+      });
+
+      if (!result.verified) {
+        setOtpLoading(false);
+        setOtpError(result.message || '⚠️ अमान्य OTP दर्ज किया गया है। कृपया सही कोड दर्ज करें।');
+        return;
+      }
+
       setOtpLoading(false);
-      const cleanPhone = normalizePhoneNumber(phoneNumber);
 
       // Check if we have cached records for this phone
       const cached = getOfflineCachedCertificates(cleanPhone);
@@ -419,7 +493,10 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
       setCertificates(records);
       setOfflineRecentPhones(getAllOfflineCachedPhoneSummaries());
       setStep('list');
-    }, 500);
+    } catch (err: any) {
+      setOtpLoading(false);
+      setOtpError(err.message || 'OTP सत्यापन में समस्या आई।');
+    }
   };
 
   // Filter and search
@@ -937,31 +1014,41 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
 
             {/* STEP 2: OTP VERIFICATION */}
             {step === 'otp' && (
-              <div className="max-w-sm mx-auto py-4 sm:py-6 text-center space-y-4">
+              <div className="max-w-md mx-auto py-4 sm:py-6 text-center space-y-4">
                 <div className="w-16 h-16 rounded-3xl bg-amber-100 border-2 border-amber-300 flex items-center justify-center mx-auto text-amber-800 shadow-md">
                   <KeyRound className="w-8 h-8" />
                 </div>
 
                 <div>
                   <h4 className="text-lg sm:text-xl font-black text-slate-900 font-serif">
-                    अनिवार्य OTP सत्यापन (Mandatory OTP Verification)
+                    अनिवार्य मोबाइल OTP सत्यापन (Real SMS OTP)
                   </h4>
                   <p className="text-xs text-slate-600 mt-1">
-                    पंजीकृत मोबाइल <strong>+91-{phoneNumber}</strong> पर भेजा गया 4-अंकीय OTP दर्ज करें।
+                    प्रमाण पत्र केवल पंजीकरण में दर्ज मोबाइल नंबर <strong>+91 {phoneNumber.slice(0, 3)}••••{phoneNumber.slice(-3)}</strong> पर भेजे गए 6-अंकीय OTP सत्यापन के बाद ही डाउनलोड होगा।
                   </p>
                 </div>
 
-                {/* Change Number Link */}
-                <button
-                  type="button"
-                  onClick={() => setStep('phone')}
-                  className="text-xs font-bold text-amber-800 hover:text-amber-950 underline inline-flex items-center gap-1 cursor-pointer"
-                >
-                  <span>मोबाइल नंबर बदलें</span>
-                </button>
+                {/* Delivery Badge */}
+                {deliveryStatus && (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>{deliveryStatus}</span>
+                  </div>
+                )}
 
-                {/* 4-digit PIN Inputs */}
-                <div className="flex justify-center gap-2.5 pt-2">
+                {/* Change Number Link */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setStep('phone')}
+                    className="text-xs font-bold text-amber-800 hover:text-amber-950 underline inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>मोबाइल नंबर बदलें</span>
+                  </button>
+                </div>
+
+                {/* 6-digit PIN Inputs */}
+                <div className="flex justify-center gap-2 pt-2">
                   {otp.map((digit, idx) => (
                     <input
                       key={idx}
@@ -972,30 +1059,58 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
                       value={digit}
                       onChange={(e) => handleOtpChange(e.target.value, idx)}
                       onKeyDown={(e) => handleOtpKeyDown(e, idx)}
-                      className="w-12 h-14 text-center text-2xl font-mono font-black border-2 border-slate-300 focus:border-amber-600 rounded-2xl focus:outline-none bg-white shadow-inner"
+                      className="w-11 h-14 text-center text-2xl font-mono font-black border-2 border-slate-300 focus:border-amber-600 rounded-xl focus:outline-none bg-white shadow-inner"
                     />
                   ))}
                 </div>
 
                 {otpError && (
-                  <p className="text-xs font-bold text-amber-900 bg-amber-50 border border-amber-200 py-2 px-3 rounded-xl">
+                  <p className="text-xs font-bold text-amber-900 bg-amber-50 border border-amber-200 py-2.5 px-3 rounded-xl">
                     {otpError}
                   </p>
+                )}
+
+                {/* WhatsApp fallback option */}
+                {whatsappUrl && (
+                  <div className="bg-emerald-50/80 border border-emerald-300/80 rounded-xl p-2.5 flex items-center justify-between text-left">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                        <MessageSquare className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="text-[11px] text-emerald-900 font-semibold leading-tight">
+                        <span>SMS नेटवर्क विलंब?</span>
+                        <span className="block text-[10px] text-emerald-700 font-normal">
+                          WhatsApp पर भी तत्काल OTP प्राप्त करें
+                        </span>
+                      </div>
+                    </div>
+                    <a
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] px-2.5 py-1.5 rounded-lg shadow-xs transition-colors shrink-0"
+                    >
+                      <span>WhatsApp OTP</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
                 )}
 
                 <div className="space-y-2">
                   <button
                     onClick={handleVerifyOtp}
-                    disabled={otpLoading || otp.join('').length < 4}
+                    disabled={otpLoading || otp.join('').length < 6}
                     className="w-full py-3.5 bg-[#8B0000] hover:bg-[#6b0000] disabled:opacity-50 text-white font-black text-sm rounded-2xl shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
                   >
-                    <span>{otpLoading ? 'सत्यापित हो रहा है...' : 'सत्यापित करें व प्रमाण पत्र देखें'}</span>
+                    <span>{otpLoading ? 'OTP सत्यापित हो रहा है...' : 'OTP सत्यापित करें व प्रमाण पत्र डाउनलोड करें'}</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
-                  <span>डेमो OTP: <strong className="text-amber-800 font-mono">1234</strong></span>
+                  <span className="text-[11px] text-slate-500">
+                    सुरक्षा: 6-अंकीय वन-टाइम पासवर्ड (10 मिनट वैध)
+                  </span>
                   {canResend ? (
                     <button
                       type="button"
@@ -1801,7 +1916,7 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
               </div>
             </div>
 
-            {/* 3. Donation 80G Receipt Hidden Render */}
+            {/* 3. Donation Receipt Hidden Render */}
             <div
               ref={hiddenDonationCertRef}
               id="hidden-donation-cert"

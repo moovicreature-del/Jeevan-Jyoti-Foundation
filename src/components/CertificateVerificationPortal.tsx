@@ -134,18 +134,18 @@ export const CertificateVerificationPortal: React.FC = () => {
     if (foundDonor) {
       setSearchResult({
         type: 'donation',
-        certNo: `JJF-80G-${foundDonor.id}-2026`,
+        certNo: `JJF-DON-${foundDonor.id}-2026`,
         holderName: foundDonor.donorName,
         details: `₹ ${foundDonor.amount.toLocaleString('en-IN')} - ${foundDonor.purpose}`,
         issueDate: foundDonor.date,
-        status: 'VALID 80G RECEIPT',
+        status: 'VALID DONATION RECEIPT',
         photoUrl: foundDonor.photoUrl
       });
       return;
     }
 
     // 5. Default verified response for structured JJF prefixes
-    if (query.includes('JJF') || query.includes('VOL') || query.includes('DON') || query.includes('80G') || query.includes('ID')) {
+    if (query.includes('JJF') || query.includes('VOL') || query.includes('DON') || query.includes('ID')) {
       setSearchResult({
         type: 'volunteer',
         certNo: query,
@@ -170,11 +170,11 @@ export const CertificateVerificationPortal: React.FC = () => {
             <span>{t('verify.badge', 'आधिकारिक डिजिटल सत्यापन पोर्टल (Official Verification Portal)', 'Official Digital Verification Portal')}</span>
           </div>
           <h2 className="text-3xl font-black text-gray-900 font-['Cinzel',serif]">
-            {t('verify.title', 'सर्टिफिकेट एवं 80G रसीद सत्यापन', 'Certificate & 80G Receipt Verification')}
+            {t('verify.title', 'सर्टिफिकेट एवं दान रसीद सत्यापन', 'Certificate & Donation Receipt Verification')}
           </h2>
           <p className="text-sm text-gray-700 mt-2 max-w-xl mx-auto font-medium">
             {t('verify.sub',
-              'अपने प्रमाण पत्र / 80G दान रसीद की प्रमाणिकता जांचने के लिए सर्टिफिकेट नंबर या वॉलंटियर ID दर्ज करें।',
+              'अपने प्रमाण पत्र / दान रसीद की प्रमाणिकता जांचने के लिए सर्टिफिकेट नंबर या वॉलंटियर ID दर्ज करें।',
               'Enter your Certificate ID or Volunteer ID to check and verify the official authenticity in real time.'
             )}
           </p>

@@ -343,7 +343,7 @@ export const FestivalCertificateModal: React.FC<Props> = ({ greeting, onClose })
                     Reg. No: <span className="font-mono">{FOUNDATION_INFO.regNo}</span> | NITI Aayog: <span className="font-mono">{FOUNDATION_INFO.nitiAayogUid}</span>
                   </div>
                   <div className="text-[9px] text-gray-600 font-semibold">
-                    80G URN: {FOUNDATION_INFO.urn80G} • 12A Certified
+                    12A URN: {FOUNDATION_INFO.urn10A} • Darpan Verified
                   </div>
                 </div>
 
@@ -583,8 +583,11 @@ export const FestivalCertificateModal: React.FC<Props> = ({ greeting, onClose })
           onClose={() => setIsOtpOpen(false)}
           phoneNumber={recipientPhone}
           onSuccess={handleOtpVerified}
+          certificateId={greeting.id}
+          recipientName={greeting.recipientName}
+          certificateType="festival_cert"
           title="शुभकामना पत्र डाउनलोड - OTP सत्यापन"
-          subtitle="सुरक्षा सत्यापन: शुभकामना प्रमाण पत्र डाउनलोड करने हेतु मोबाइल नंबर OTP सत्यापित करें।"
+          subtitle="सुरक्षा सत्यापन: शुभकामना प्रमाण पत्र डाउनलोड करने हेतु पंजीकृत मोबाइल नंबर पर भेजा गया 6-अंकीय OTP सत्यापित करें।"
         />
 
         {/* Send Festival Greeting via WhatsApp & Email Modal */}

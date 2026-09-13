@@ -43,7 +43,7 @@ export const DEFAULT_DONATION_PAYMENT_SETTINGS: DonationPaymentSettings = {
   bankName: 'BANK OF INDIA',
   bankBranch: 'Daudpur, Mohammadabad, Ghazipur, Uttar Pradesh, India - 233303 (DIGIPIN 2J6T226CL2)',
   panNumber: 'AAEAJ3141Q',
-  urn80G: 'AAEAJ3141QF20231',
+  urn80G: '',
   urn10A: 'AAEAJ3141QE20231',
   nitiAayogUid: 'UP/2018/0207700',
   contactPhone: '+91-8052361666',

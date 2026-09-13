@@ -204,8 +204,8 @@
   .printable-table *,
   [data-printable="true"],
   [data-printable="true"] *,
-  #a4-80g-receipt,
-  #a4-80g-receipt *,
+  #a4-donation-receipt,
+  #a4-donation-receipt *,
   #festival-certificate-card,
   #festival-certificate-card *,
   #annual-report-card-capture,
@@ -219,7 +219,7 @@
   .printable-certificate,
   .printable-table,
   [data-printable="true"],
-  #a4-80g-receipt,
+  #a4-donation-receipt,
   #festival-certificate-card,
   #annual-report-card-capture,
   .printable-id-card {
@@ -242,8 +242,8 @@
     box-decoration-break: clone !important;
   }
 
-  /* A4 Portrait Documents (e.g. 80G Tax Exemption Receipts & Annual Report Cards) */
-  #a4-80g-receipt,
+  /* A4 Portrait Documents (e.g. Donation Receipts & Annual Report Cards) */
+  #a4-donation-receipt,
   #annual-report-card-capture {
     width: 100% !important;
     max-width: 196mm !important;

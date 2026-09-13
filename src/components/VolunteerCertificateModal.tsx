@@ -728,8 +728,11 @@ export const VolunteerCertificateModal: React.FC<Props> = ({ volunteer, onClose 
           onClose={() => setIsOtpModalOpen(false)}
           phoneNumber={volunteerPhone}
           onSuccess={handleOtpVerified}
+          certificateId={certNumber}
+          recipientName={volunteerName}
+          certificateType="volunteer_cert"
           title="स्वयंसेवक प्रमाण पत्र डाउनलोड - OTP सत्यापन"
-          subtitle="सुरक्षा सत्यापन: प्रमाण पत्र PDF / JPG डाउनलोड करने हेतु मोबाइल नंबर OTP सत्यापित करें।"
+          subtitle="सुरक्षा सत्यापन: प्रमाण पत्र PDF / JPG डाउनलोड करने हेतु पंजीकृत मोबाइल नंबर पर भेजा गया 6-अंकीय OTP सत्यापित करें।"
         />
 
         {/* Send Certificate via WhatsApp & Email Modal */}

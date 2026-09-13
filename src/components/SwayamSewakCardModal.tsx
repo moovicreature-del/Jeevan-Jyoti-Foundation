@@ -722,8 +722,11 @@ export const SwayamSewakCardModal: React.FC<Props> = ({ volunteer, onClose, onOp
           onClose={() => setIsOtpOpen(false)}
           phoneNumber={volunteerPhone}
           onSuccess={handleOtpVerified}
+          certificateId={cardId}
+          recipientName={cardName}
+          certificateType="volunteer_id"
           title="पहचान पत्र डाउनलोड - OTP सत्यापन"
-          subtitle="सुरक्षा सत्यापन: स्वयंसेवक पहचान पत्र डाउनलोड करने हेतु मोबाइल नंबर OTP सत्यापित करें।"
+          subtitle="सुरक्षा सत्यापन: स्वयंसेवक पहचान पत्र डाउनलोड करने हेतु पंजीकृत मोबाइल नंबर पर भेजा गया 6-अंकीय OTP सत्यापित करें।"
         />
 
         {/* Send Certificate / ID Card via WhatsApp & Email Modal */}

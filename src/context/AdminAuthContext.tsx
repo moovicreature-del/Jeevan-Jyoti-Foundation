@@ -20,6 +20,7 @@ import {
   updateAdminLastLogin,
   logAdminActivity
 } from '../services/adminService';
+import { verifyAdminLogin } from '../services/adminCredentialsService';
 import toast from 'react-hot-toast';
 
 // ----------------------------------------------------------------------------
@@ -110,6 +111,7 @@ interface AdminAuthContextType {
     email: string;
     role: AdminRole;
   }) => Promise<boolean>;
+  loginWithCredentials: (userId: string, password: string) => Promise<{ success: boolean; message: string }>;
   loginAsDemoSuperAdmin: () => Promise<void>;
   loginAsDemoAdmin: () => Promise<void>;
   logout: () => Promise<void>;
@@ -127,6 +129,7 @@ const defaultAdminAuthContext: AdminAuthContextType = {
   sendOtp: async () => false,
   verifyOtpAndLogin: async () => ({ success: false, isNewUser: false }),
   submitRegistration: async () => false,
+  loginWithCredentials: async () => ({ success: false, message: '' }),
   loginAsDemoSuperAdmin: async () => {},
   loginAsDemoAdmin: async () => {},
   logout: async () => {},
@@ -536,6 +539,50 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   /**
+   * यूज़र आईडी व पासवर्ड द्वारा सुरक्षित एडमिन/सुपर एडमिन लॉगिन
+   */
+  const loginWithCredentials = async (
+    userId: string,
+    pass: string
+  ): Promise<{ success: boolean; message: string }> => {
+    const start = performance.now();
+    try {
+      setIsLoading(true);
+      const res = await verifyAdminLogin(userId, pass);
+      setIsLoading(false);
+
+      if (res.success && res.userProfile) {
+        setAdminProfile(res.userProfile);
+        sessionStorage.setItem('jjf_demo_admin', JSON.stringify(res.userProfile));
+        toast.success(res.message);
+
+        recordAndLogPerf(`Credentials Login Success (${res.role})`, start, {
+          userId,
+          role: res.role,
+          name: res.userProfile.name
+        });
+
+        logAdminActivity({
+          adminUid: res.userProfile.uid,
+          adminName: res.userProfile.name,
+          action: res.role === 'superadmin' ? 'SUPER_ADMIN_LOGIN' : 'ADMIN_LOGIN',
+          details: `User ID '${userId}' द्वारा प्रशासनिक लॉगिन संपन्न हुआ।`
+        }).catch(() => {});
+
+        return { success: true, message: res.message };
+      } else {
+        toast.error(res.message);
+        return { success: false, message: res.message };
+      }
+    } catch (e: any) {
+      setIsLoading(false);
+      const errMsg = e?.message || 'लॉगिन में त्रुटि आई। कृपया पुनः प्रयास करें।';
+      toast.error(errMsg);
+      return { success: false, message: errMsg };
+    }
+  };
+
+  /**
    * परीक्षण हेतु सुपर एडमिन त्वरित लॉगिन (Demo Super Admin Quick Login: 8052361666)
    */
   const loginAsDemoSuperAdmin = async (): Promise<void> => {
@@ -638,6 +685,7 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
         sendOtp,
         verifyOtpAndLogin,
         submitRegistration,
+        loginWithCredentials,
         loginAsDemoSuperAdmin,
         loginAsDemoAdmin,
         logout,

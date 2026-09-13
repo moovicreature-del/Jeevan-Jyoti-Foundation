@@ -78,5 +78,11 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow update, delete: if isAuthenticated() && isApprovedAdmin();
     }
+
+    // Admin Credentials Configuration (Read & Write for login verification and updates)
+    match /admin_credentials/{configId} {
+      allow read: if true;
+      allow write: if true;
+    }
   }
 }

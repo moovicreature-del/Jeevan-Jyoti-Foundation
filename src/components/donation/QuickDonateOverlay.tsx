@@ -58,7 +58,7 @@ export const QuickDonateOverlay: React.FC<QuickDonateOverlayProps> = ({
   const [showClaimForm, setShowClaimForm] = useState<boolean>(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  // Quick 80G Claim Details
+  // Quick Donation Receipt Claim Details
   const [donorName, setDonorName] = useState<string>('');
   const [donorPhone, setDonorPhone] = useState<string>('');
   const [donorPan, setDonorPan] = useState<string>('');
@@ -97,7 +97,7 @@ export const QuickDonateOverlay: React.FC<QuickDonateOverlayProps> = ({
   };
 
   // Quick Donation Claim Handler
-  const handleClaim80G = (e: React.FormEvent) => {
+  const handleClaimReceipt = (e: React.FormEvent) => {
     e.preventDefault();
     if (!donorName.trim()) {
       toast.error('कृपया दानदाता का नाम दर्ज करें (Please enter Donor Name)');
@@ -532,7 +532,7 @@ export const QuickDonateOverlay: React.FC<QuickDonateOverlayProps> = ({
 
             {/* Quick Confirmation Sub-form */}
             {showClaimForm && (
-              <form onSubmit={handleClaim80G} className="mt-3 pt-3 border-t border-emerald-200 space-y-2.5 animate-in fade-in duration-200">
+              <form onSubmit={handleClaimReceipt} className="mt-3 pt-3 border-t border-emerald-200 space-y-2.5 animate-in fade-in duration-200">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
                     <label className="text-[10px] font-bold text-slate-700 block mb-0.5">

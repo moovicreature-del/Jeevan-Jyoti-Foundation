@@ -356,7 +356,7 @@ export const TabHomeTextEditor: React.FC = () => {
                     <div className="flex justify-center gap-3 text-[10px] text-amber-400 pt-2 border-t border-slate-800">
                       <span>नीति आयोग दर्पण</span>
                       <span>•</span>
-                      <span>80G / 12A अधिकृत</span>
+                      <span>पंजीकृत संस्था</span>
                       <span>•</span>
                       <span>ग़ाज़ीपुर (उ.प्र.)</span>
                     </div>

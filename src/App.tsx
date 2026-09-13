@@ -322,7 +322,7 @@ export function App() {
             />
           )}
 
-          {/* 4. 80G Tax Exemption Donation Receipt A4 PDF Modal */}
+          {/* 4. Official Donation Receipt A4 PDF Modal */}
           {selectedDonation && (
             <Donation80GReceiptView
               donation={selectedDonation}
@@ -338,7 +338,7 @@ export function App() {
             />
           )}
 
-          {/* 5. 80G Compliant Online Donation Portal */}
+          {/* 5. Online Donation Portal */}
           {showDonateModal && (
             <Donation80GPortal
               isOpen={showDonateModal}
@@ -366,7 +366,7 @@ export function App() {
             />
           )}
 
-          {/* 8. My Donations Explorer & 80G Retrieval Modal */}
+          {/* 8. My Donations Explorer & Receipt Retrieval Modal */}
           {showMyDonationsModal && (
             <DonorDashboardModal
               isOpen={showMyDonationsModal}

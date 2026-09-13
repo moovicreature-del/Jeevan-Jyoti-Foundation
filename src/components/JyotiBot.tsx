@@ -70,7 +70,7 @@ export const JyotiBot: React.FC = () => {
         {
           id: (Date.now() + 1).toString(),
           sender: 'bot',
-          text: 'जीवन ज्योति फाउंडेशन गाजीपुर, उत्तर प्रदेश, भारत (Reg. No: GAZ/03373) में आपका स्वागत है। हमारे 80G दान, शिक्षा शिविर व स्वयंसेवक कार्यक्रम की अधिक जानकारी के लिए आप मुख्य पृष्ठ देख सकते हैं।',
+          text: 'जीवन ज्योति फाउंडेशन गाजीपुर, उत्तर प्रदेश, भारत (Reg. No: GAZ/03373) में आपका स्वागत है। हमारे दान, शिक्षा शिविर व स्वयंसेवक कार्यक्रम की अधिक जानकारी के लिए आप मुख्य पृष्ठ देख सकते हैं।',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
       ]);
@@ -156,10 +156,10 @@ export const JyotiBot: React.FC = () => {
           {/* Quick Prompts */}
           <div className="px-3 py-1.5 bg-amber-50/80 border-t border-amber-100 flex gap-1.5 overflow-x-auto text-[10px] no-scrollbar">
             <button
-              onClick={() => setInput('80G टैक्स छूट रसीद कैसे मिलेगी?')}
+              onClick={() => setInput('दान रसीद कैसे मिलेगी?')}
               className="px-2 py-1 bg-white border border-amber-300 rounded-full shrink-0 hover:bg-amber-100 cursor-pointer"
             >
-              80G कर छूट
+              दान रसीद
             </button>
             <button
               onClick={() => setInput('वॉलंटियर सर्टिफिकेट कैसे बनाएं?')}

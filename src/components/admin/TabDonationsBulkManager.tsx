@@ -137,12 +137,12 @@ export const TabDonationsBulkManager: React.FC = () => {
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement('a');
       link.setAttribute('href', encodedUri);
-      link.setAttribute('download', `JJF_80G_Form10BD_Donations_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute('download', `JJF_Donations_Report_${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
-      toast.success('80G दानदाता डेटा CSV (Form 10BD) सफलतापूर्वक डाउनलोड हो गया!');
+      toast.success('दानदाता डेटा CSV सफलतापूर्वक डाउनलोड हो गया!');
     } catch (err) {
       console.error(err);
       toast.error('CSV निर्यात करने में त्रुटि आई।');
@@ -163,7 +163,7 @@ export const TabDonationsBulkManager: React.FC = () => {
           }`}
         >
           <Receipt className="w-4 h-4" />
-          <span>80G दानदाता रिकॉर्ड व रसीदें (80G Donors & 10BD)</span>
+          <span>दानदाता रिकॉर्ड व रसीदें (Donations & Receipts)</span>
         </button>
 
         <button
@@ -191,13 +191,13 @@ export const TabDonationsBulkManager: React.FC = () => {
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 rounded-full text-xs font-black">
                   <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>आयकर धारा 80G दान एवं रसीद प्रबंधन (80G Compliance Hub)</span>
+                  <span>दान एवं रसीद प्रबंधन (Donations Hub)</span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                  80G दानदाता रिकॉर्ड व थोक रसीद डाउनलोड
+                  दानदाता रिकॉर्ड व थोक रसीद डाउनलोड
                 </h2>
                 <p className="text-xs sm:text-sm text-emerald-100 max-w-2xl leading-relaxed">
-                  सभी दानदाताओं की 80G कर छूट रसीदें, URN: <strong className="text-amber-300 font-mono">{paymentSettings.urn80G || FOUNDATION_INFO.urn80G}</strong>, फॉर्म 10BD आयकर ऑडिट हेतु CSV रिपोर्ट एवं थोक PDF जेनरेशन।
+                  सभी दानदाताओं की आधिकारिक रसीदें, संस्था पंजीकरण: <strong className="text-amber-300 font-mono">{FOUNDATION_INFO.regNo}</strong>, वित्तीय रिकॉर्ड हेतु CSV रिपोर्ट एवं थोक PDF जेनरेशन।
                 </p>
               </div>
 
@@ -217,7 +217,7 @@ export const TabDonationsBulkManager: React.FC = () => {
                   className="flex items-center gap-2 px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-black text-xs rounded-xl shadow-md transition cursor-pointer"
                 >
                   <FileSpreadsheet className="w-4 h-4" />
-                  <span>Form 10BD CSV एक्सपोर्ट</span>
+                  <span>दानदाता सूची CSV</span>
                 </button>
               </div>
             </div>
@@ -241,17 +241,17 @@ export const TabDonationsBulkManager: React.FC = () => {
                 ₹ {totalAmount.toLocaleString('en-IN')}
               </div>
               <span className="text-[11px] text-gray-500 mt-0.5 block">
-                100% पारदर्शी एवं 80G कर-मुक्त
+                100% पारदर्शी एवं प्रमाणित दान
               </span>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-              <span className="text-xs font-bold text-gray-500 block">80G पंजीकरण विवरण</span>
+              <span className="text-xs font-bold text-gray-500 block">संस्था पंजीकरण विवरण</span>
               <div className="text-sm font-mono font-bold text-[#0024B8] mt-1">
-                {paymentSettings.urn80G || FOUNDATION_INFO.urn80G}
+                {FOUNDATION_INFO.regNo}
               </div>
               <span className="text-[11px] text-gray-500 mt-0.5 block">
-                12A: {paymentSettings.urn10A || FOUNDATION_INFO.urn10A}
+                PAN: {FOUNDATION_INFO.pan} • दर्पण UID: {FOUNDATION_INFO.nitiAayogUid}
               </span>
             </div>
           </div>
@@ -298,7 +298,7 @@ export const TabDonationsBulkManager: React.FC = () => {
                 <th className="py-3 px-4">PAN नंबर</th>
                 <th className="py-3 px-4">मोबाइल / ईमेल</th>
                 <th className="py-3 px-4 text-right">राशि (₹)</th>
-                <th className="py-3 px-4 text-center">80G A4 PDF</th>
+                <th className="py-3 px-4 text-center">A4 रसीद PDF</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -335,7 +335,7 @@ export const TabDonationsBulkManager: React.FC = () => {
                       <button
                         onClick={() => setSelectedDonationForView(d)}
                         className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-[#0024B8] border border-indigo-200 rounded-lg font-bold text-xs inline-flex items-center gap-1 transition cursor-pointer"
-                        title="View and Download 80G A4 PDF Receipt"
+                        title="View and Download A4 PDF Receipt"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         <span>रसीद</span>
@@ -349,7 +349,7 @@ export const TabDonationsBulkManager: React.FC = () => {
         </div>
       </div>
 
-        {/* Selected 80G PDF View Modal */}
+        {/* Selected Donation Receipt PDF View Modal */}
         {selectedDonationForView && (
           <Donation80GReceiptView
             donation={selectedDonationForView}

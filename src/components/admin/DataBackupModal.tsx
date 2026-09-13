@@ -181,7 +181,7 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({ isOpen, onClos
             </div>
           </div>
           <p className="text-xs text-blue-200 max-w-xl leading-relaxed mt-1">
-            जीवन ज्योति फाउंडेशन ग़ाज़ीपुर के समस्त फायरस्टोर दान रिकॉर्ड, 80G टैक्स रसीदें, स्वयंसेवक प्रोफाइल व जारी प्रमाण पत्रों का पूर्ण संरचित JSON बैकअप एक क्लिक में डाउनलोड करें।
+            जीवन ज्योति फाउंडेशन ग़ाज़ीपुर के समस्त फायरस्टोर दान रिकॉर्ड, रसीदें, स्वयंसेवक प्रोफाइल व जारी प्रमाण पत्रों का पूर्ण संरचित JSON बैकअप एक क्लिक में डाउनलोड करें।
           </p>
         </div>
 
@@ -235,13 +235,13 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({ isOpen, onClos
             <div className="bg-indigo-50/70 border border-indigo-200 rounded-2xl p-3.5 space-y-1">
               <div className="flex items-center justify-between text-indigo-800">
                 <ShieldCheck className="w-4 h-4" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700">80G PAN दाता</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700">PAN दाता</span>
               </div>
               <div className="text-xl font-black text-indigo-950">
                 {isCompiling ? '...' : summary?.donationsWithPanCount || 0}
               </div>
               <p className="text-[10px] text-indigo-800/80 font-bold">
-                Form 10BD अनुपालित
+                प्रमाणित रिकॉर्ड
               </p>
             </div>
           </div>
@@ -265,7 +265,7 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({ isOpen, onClos
                 <strong>टैम्पर-प्रूफ चेकसम:</strong> बैकअप फ़ाइल में SHA-256 डिजिटल हैश शामिल है, जिससे किसी भी अनधिकृत बदलाव का तुरंत पता चल जाता है।
               </li>
               <li>
-                <strong>उपयोगिता:</strong> आपदा प्रबंधन (Disaster Recovery), सीए/आयकर 80G ऑडिट, वित्तीय वर्ष समाप्ति बैकअप एवं ऑफलाइन रिकॉर्ड सत्यापन।
+                <strong>उपयोगिता:</strong> आपदा प्रबंधन (Disaster Recovery), सीए/संस्थागत ऑडिट, वित्तीय वर्ष समाप्ति बैकअप एवं ऑफलाइन रिकॉर्ड सत्यापन।
               </li>
             </ul>
 

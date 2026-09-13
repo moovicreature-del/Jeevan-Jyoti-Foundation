@@ -39,6 +39,7 @@ import {
   resetDonationPaymentSettings,
   uploadCustomPaymentQrImage
 } from '../../services/adminService';
+import { FOUNDATION_INFO } from '../../data/foundationData';
 import toast from 'react-hot-toast';
 
 export const TabDonationPaymentSettings: React.FC = () => {
@@ -321,7 +322,7 @@ export const TabDonationPaymentSettings: React.FC = () => {
               दान भुगतान विवरण व QR कोड प्रबंधन
             </h2>
             <p className="text-xs sm:text-sm text-blue-100 max-w-2xl leading-relaxed">
-              यहाँ से आप संस्था का बैंक खाता विवरण, UPI आईडी (VPA), कस्टम QR कोड फोटो तथा 80G विवरण बदल सकते हैं। यह जानकारी पूरे पोर्टल पर तुरंत लाइव अपडेट हो जाएगी।
+              यहाँ से आप संस्था का बैंक खाता विवरण, UPI आईडी (VPA), कस्टम QR कोड फोटो तथा विधिक विवरण बदल सकते हैं। यह जानकारी पूरे पोर्टल पर तुरंत लाइव अपडेट हो जाएगी।
             </p>
           </div>
 
@@ -681,7 +682,7 @@ export const TabDonationPaymentSettings: React.FC = () => {
               </div>
             </div>
 
-            {/* Section 4: Statutory 80G, 12A & PAN Numbers */}
+            {/* Section 4: Statutory Registration, 12A & PAN Numbers */}
             <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
               <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
                 <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold">
@@ -689,23 +690,23 @@ export const TabDonationPaymentSettings: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-black text-sm text-slate-900">
-                    4. आयकर 80G, 12A एवं PAN विवरण (Statutory 80G Tax Identifiers)
+                    4. संस्था पंजीकरण, 12A एवं PAN विवरण (Statutory Identifiers)
                   </h3>
-                  <p className="text-[11px] text-slate-500">रसीदों और आयकर छूट प्रमाणपत्रों पर छपने वाले नंबर</p>
+                  <p className="text-[11px] text-slate-500">रसीदों और आधिकारिक दस्तावेजों पर छपने वाले नंबर</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-black text-slate-800 mb-1">
-                    80G URN नंबर
+                    संस्था पंजीकरण संख्या (Registration No)
                   </label>
                   <input
                     type="text"
-                    placeholder="AAEAJ3141QF20231"
-                    value={urn80G}
-                    onChange={(e) => setUrn80G(e.target.value.toUpperCase().trim())}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 text-xs font-mono font-bold text-purple-900"
+                    placeholder="GAZ/03373"
+                    value={FOUNDATION_INFO.regNo}
+                    readOnly
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-xs font-mono font-bold text-purple-900"
                   />
                 </div>
 
@@ -815,7 +816,7 @@ export const TabDonationPaymentSettings: React.FC = () => {
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  🏛️ 80G व बैंक
+                  🏛️ बैंक विवरण
                 </button>
               </div>
             </div>
@@ -920,18 +921,18 @@ export const TabDonationPaymentSettings: React.FC = () => {
                 </div>
               </div>
             ) : (
-              /* Bank & 80G Detailed Preview */
+              /* Bank Detailed Preview */
               <div className="bg-gradient-to-b from-blue-500/10 via-white to-blue-500/5 rounded-3xl p-5 border-2 border-blue-300 shadow-md space-y-4">
                 <div className="text-center space-y-1">
                   <div className="inline-flex items-center gap-1.5 text-[10px] uppercase font-black tracking-wider text-blue-900 bg-blue-200/80 px-2.5 py-0.5 rounded-full">
                     <Building2 className="w-3 h-3 text-blue-700" />
-                    <span>80G बैंक खाता एवं रसीद पोर्टल</span>
+                    <span>बैंक खाता एवं दान रसीद पोर्टल</span>
                   </div>
                   <h4 className="font-black text-base text-slate-900">
                     {bankAccountName || 'JEEVAN JYOTI FOUNDATION'}
                   </h4>
                   <p className="text-xs text-slate-600">
-                    NEFT / RTGS / IMPS एवं आधिकारिक 80G रसीद
+                    NEFT / RTGS / IMPS एवं आधिकारिक दान रसीद
                   </p>
                 </div>
 
@@ -943,7 +944,7 @@ export const TabDonationPaymentSettings: React.FC = () => {
                       आधिकारिक बैंक खाता
                     </span>
                     <span className="text-[10px] text-blue-700 font-mono font-bold bg-blue-100 px-2 py-0.5 rounded">
-                      100% 80G कर-मुक्त
+                      100% पारदर्शी एवं प्रमाणित
                     </span>
                   </div>
 
@@ -993,8 +994,8 @@ export const TabDonationPaymentSettings: React.FC = () => {
                 {/* Statutory Details Preview */}
                 <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-1.5">
                   <div className="flex justify-between">
-                    <span className="text-slate-500">80G URN:</span>
-                    <span className="font-mono font-bold text-purple-900">{urn80G || 'AAEAJ3141QF20231'}</span>
+                    <span className="text-slate-500">पंजीकरण संख्या:</span>
+                    <span className="font-mono font-bold text-purple-900">{FOUNDATION_INFO.regNo}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-500">NGO PAN:</span>

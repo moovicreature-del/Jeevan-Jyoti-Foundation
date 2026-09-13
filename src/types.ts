@@ -91,6 +91,8 @@ export interface DonationRecord {
   purposeHindi: string;
   paymentMode: string;
   transactionRef: string;
+  transactionStatus?: 'verified' | 'pending' | 'failed';
+  transactionHash?: string;
   taxExemptEligible: boolean;
   agree80GDeclaration?: boolean;
   photoUrl?: string;
@@ -98,6 +100,7 @@ export interface DonationRecord {
   country?: string;
   state?: string;
   district?: string;
+  pincode?: string;
   block?: string;
   wardOrVillage?: string;
   status?: 'confirmed' | 'pending' | 'verified';

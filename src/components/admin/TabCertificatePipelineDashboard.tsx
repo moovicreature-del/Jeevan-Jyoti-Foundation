@@ -104,7 +104,7 @@ export const TabCertificatePipelineDashboard: React.FC<TabCertificatePipelineDas
     { value: 'all', label: 'सभी प्रमाण पत्र (All Types)', icon: Layers },
     { value: 'volunteer_cert', label: 'स्वयंसेवक प्रमाण पत्र', icon: Award },
     { value: 'volunteer_id', label: 'डिजिटल पहचान पत्र (ID)', icon: Smartphone },
-    { value: 'donation_80g', label: '80G दान रसीदें', icon: ShieldCheck },
+    { value: 'donation_80g', label: 'दान रसीदें', icon: ShieldCheck },
     { value: 'task_appreciation', label: 'सेवा कार्य प्रशंसा पत्र', icon: CheckCircle },
     { value: 'festival_greeting', label: 'पर्व शुभकामना पत्र', icon: Sparkles },
   ];
@@ -243,7 +243,7 @@ export const TabCertificatePipelineDashboard: React.FC<TabCertificatePipelineDas
       case 'volunteer_id':
         return { label: 'डिजिटल पहचान पत्र (ID)', bg: 'bg-sky-50 text-sky-800 border-sky-200' };
       case 'donation_80g':
-        return { label: '80G आयकर दान रसीद', bg: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+        return { label: 'आधिकारिक दान रसीद', bg: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
       case 'task_appreciation':
         return { label: 'सेवा कार्य प्रशंसा पत्र', bg: 'bg-amber-50 text-amber-900 border-amber-200' };
       case 'festival_greeting':
@@ -289,7 +289,7 @@ export const TabCertificatePipelineDashboard: React.FC<TabCertificatePipelineDas
               प्रमाण पत्र जारीकरण एवं पंजीकरण पाइपलाइन
             </h1>
             <p className="text-xs sm:text-sm text-blue-100 max-w-3xl leading-relaxed">
-              वर्ष-वार व माह-वार जारी किए गए समस्त प्रमाण पत्रों (स्वयंसेवक, 80G दान रसीद, पहचान पत्र, सेवा प्रशंसा व पर्व पत्र) की लाइव स्थिति, सत्यापन पाइपलाइन एवं विस्तृत सांख्यिकी।
+              वर्ष-वार व माह-वार जारी किए गए समस्त प्रमाण पत्रों (स्वयंसेवक, दान रसीद, पहचान पत्र, सेवा प्रशंसा व पर्व पत्र) की लाइव स्थिति, सत्यापन पाइपलाइन एवं विस्तृत सांख्यिकी।
             </p>
           </div>
 
@@ -560,12 +560,12 @@ export const TabCertificatePipelineDashboard: React.FC<TabCertificatePipelineDas
               <Sparkles className="w-5 h-5" />
             </div>
             <span className="text-[10px] bg-purple-50 text-purple-800 font-bold px-2 py-0.5 rounded-full border border-purple-200">
-              80G Exemption
+              Verified Donations
             </span>
           </div>
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-              80G दान राशि रिकॉर्डेड
+              कुल दान राशि रिकॉर्डेड
             </span>
             <div className="flex items-baseline gap-1 mt-0.5">
               <span className="text-2xl sm:text-3xl font-black text-purple-950">
@@ -621,7 +621,7 @@ export const TabCertificatePipelineDashboard: React.FC<TabCertificatePipelineDas
                   <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                   <Bar dataKey="volunteer_cert" name="स्वयंसेवक पत्र" stackId="a" fill="#1d4ed8" radius={[0, 0, 0, 0]} />
                   <Bar dataKey="volunteer_id" name="पहचान पत्र (ID)" stackId="a" fill="#0284c7" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="donation_80g" name="80G दान रसीद" stackId="a" fill="#059669" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="donation_80g" name="दान रसीद" stackId="a" fill="#059669" radius={[0, 0, 0, 0]} />
                   <Bar dataKey="task_appreciation" name="सेवा प्रशंसा पत्र" stackId="a" fill="#d97706" radius={[0, 0, 0, 0]} />
                   <Bar dataKey="festival_greeting" name="पर्व शुभकामना" stackId="a" fill="#7c3aed" radius={[4, 4, 0, 0]} />
                 </BarChart>
@@ -791,7 +791,7 @@ export const TabCertificatePipelineDashboard: React.FC<TabCertificatePipelineDas
                     <div>
                       <span className="text-xs font-black text-slate-900">वर्ष {yr.year}</span>
                       <span className="text-[10px] text-slate-500 block">
-                        स्वयंसेवक: {yr.volunteer_cert} • 80G: {yr.donation_80g} • ID: {yr.volunteer_id}
+                        स्वयंसेवक: {yr.volunteer_cert} • दान रसीद: {yr.donation_80g} • ID: {yr.volunteer_id}
                       </span>
                     </div>
                     <div className="text-right">
@@ -1041,8 +1041,7 @@ export const TabCertificatePipelineDashboard: React.FC<TabCertificatePipelineDas
                 </div>
                 <div className="font-mono text-[10px] text-blue-200 space-y-0.5">
                   <p>Database Ref: firestore://issued_certificates/{selectedCertDetail.id.replace(/[\/\s]/g, '_')}</p>
-                  <p>Registration No: GAZ/03373 | NITI Aayog: UP/2018/0207700</p>
-                  <p>Section 80G URN: AAEAJ3141QF20231 | 12A URN: AAEAJ3141QE20231</p>
+                  <p>Registration No: GAZ/03373 | NITI Aayog: UP/2018/0207700 | PAN: AAEAJ3141Q</p>
                 </div>
               </div>
             </div>

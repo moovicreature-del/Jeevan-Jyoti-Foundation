@@ -30,13 +30,14 @@ import { TabUserManagement } from './TabUserManagement';
 import { TabDonationsBulkManager } from './TabDonationsBulkManager';
 import { TabDonationPaymentSettings } from './TabDonationPaymentSettings';
 import { TabCertificatePipelineDashboard } from './TabCertificatePipelineDashboard';
-import { Receipt, CreditCard, Award, Database, Download } from 'lucide-react';
+import { TabSecuritySettings } from './TabSecuritySettings';
+import { Receipt, CreditCard, Award, Database, Download, KeyRound } from 'lucide-react';
 import { AdminUploadProgressProvider } from '../../context/AdminUploadProgressContext';
 import { AdminUploadProgressBar } from './AdminUploadProgressBar';
 import { BrandLogo } from '../common/BrandLogo';
 import { DataBackupModal } from './DataBackupModal';
 
-export type AdminTabType = 'dashboard' | 'certificates' | 'donations' | 'payment' | 'media' | 'notice' | 'text' | 'users';
+export type AdminTabType = 'dashboard' | 'certificates' | 'donations' | 'payment' | 'media' | 'notice' | 'text' | 'users' | 'security';
 
 interface AdminLayoutProps {
   onBackToWebsite: () => void;
@@ -68,11 +69,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ onBackToWebsite, onOpe
     },
     {
       id: 'donations' as AdminTabType,
-      label: '80G दान व रसीदें (80G Hub)',
-      sublabel: 'Tab: रसीदें व Form 10BD',
+      label: 'दानदाता व रसीदें (Donations Hub)',
+      sublabel: 'Tab: रसीदें व डेटा एक्सपोर्ट',
       icon: Receipt,
       superAdminOnly: false,
-      badge: '80G Tax'
+      badge: 'Donations'
     },
     {
       id: 'payment' as AdminTabType,
@@ -109,6 +110,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ onBackToWebsite, onOpe
       label: 'यूज़र मैनेजमेंट (Users)',
       sublabel: 'Tab 4: एडमिन अप्रूवल',
       icon: Users,
+      superAdminOnly: true,
+      badge: 'Super Admin'
+    },
+    {
+      id: 'security' as AdminTabType,
+      label: 'आईडी व पासवर्ड सुरक्षा (Security)',
+      sublabel: 'सुपर एडमिन व एडमिन क्रेडेंशियल्स',
+      icon: KeyRound,
       superAdminOnly: true,
       badge: 'Super Admin'
     }
@@ -260,7 +269,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ onBackToWebsite, onOpe
               </span>
             </div>
             <p className="text-[11px] text-amber-900 leading-relaxed">
-              दानदाता (80G), स्वयंसेवक व जारी प्रमाण पत्रों का पूर्ण JSON बैकअप डाउनलोड करें।
+              दानदाता, स्वयंसेवक व जारी प्रमाण पत्रों का पूर्ण JSON बैकअप डाउनलोड करें।
             </p>
             <button
               id="btn-open-database-backup-sidebar"
@@ -382,6 +391,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ onBackToWebsite, onOpe
           {activeTab === 'notice' && <TabNoticeBoardManager />}
           {activeTab === 'text' && <TabHomeTextEditor />}
           {activeTab === 'users' && <TabUserManagement />}
+          {activeTab === 'security' && <TabSecuritySettings />}
         </main>
       </div>
 

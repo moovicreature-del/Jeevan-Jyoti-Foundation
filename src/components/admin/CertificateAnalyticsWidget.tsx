@@ -327,7 +327,7 @@ export const CertificateAnalyticsWidget: React.FC<CertificateAnalyticsWidgetProp
 
         <div className="bg-slate-50 rounded-2xl p-3.5 border border-slate-200/80">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-            80G दान प्रमाणित राशि
+            कुल दान प्रमाणित राशि
           </span>
           <div className="flex items-baseline gap-1 mt-1">
             <span className="text-xl font-black text-slate-900">
@@ -335,7 +335,7 @@ export const CertificateAnalyticsWidget: React.FC<CertificateAnalyticsWidgetProp
             </span>
           </div>
           <span className="text-[10px] text-emerald-700 font-bold block mt-0.5">
-            10BD टैक्स छूट अधिकृत
+            संस्था अधिकृत रसीद
           </span>
         </div>
 
