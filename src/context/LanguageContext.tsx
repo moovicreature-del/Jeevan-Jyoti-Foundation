@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { applyLiveTranslation, initLiveTranslator } from '../utils/liveUiTranslator';
 
-export type Language = 'hi' | 'en';
+export type Language = 'hi' | 'en' | 'bho' | 'sa' | string;
 
 interface LanguageContextType {
   language: Language;
@@ -8,6 +9,8 @@ interface LanguageContextType {
   toggleLanguage: () => void;
   isHindi: boolean;
   isEnglish: boolean;
+  isBhojpuri?: boolean;
+  isSanskrit?: boolean;
   t: (key: string, hindiOrDefault?: string, englishText?: string) => string;
 }
 
@@ -16,7 +19,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Header & Brand
     'org.name': 'जीवन ज्योति फाउंडेशन ग़ाज़ीपुर, उत्तर प्रदेश, भारत',
     'org.name_en': 'JEEVAN JYOTI FOUNDATION GHAZIPUR, UTTAR PRADESH, INDIA',
-    'org.tagline': 'सेवा • शिक्षा • स्वास्थ्य • स्वावलम्बन',
+    'org.tagline': 'सेवा • शिक्षा • स्वास्थ्य',
     'org.reg_badge': 'सरकारी पंजीकृत संस्था (UP/2018/0207700)',
     
     // Nav
@@ -33,8 +36,8 @@ const translations: Record<Language, Record<string, string>> = {
     'hero.badge': 'Govt. Registered NGO (UP/2018/0207700)',
     'hero.title_hi': 'जीवन ज्योति फाउंडेशन ग़ाज़ीपुर, उत्तर प्रदेश, भारत',
     'hero.title_en': 'JEEVAN JYOTI FOUNDATION GHAZIPUR, UTTAR PRADESH, INDIA',
-    'hero.tagline': 'सेवा • शिक्षा • स्वास्थ्य • स्वावलम्बन (समर्पित समाज सेवा)',
-    'hero.desc': 'ग़ाज़ीपुर, उत्तर प्रदेश (भारत) के ग्रामीण व मलिन बस्तियों के निर्धन बच्चों को निःशुल्क गुणवत्तापूर्ण शिक्षा, निराश्रितों को अन्नपूर्णा भोजन सेवा, स्वास्थ्य शिविर एवं सामाजिक स्वावलंबन हेतु समर्पित संस्था।',
+    'hero.tagline': 'सेवा • शिक्षा • स्वास्थ्य (समर्पित समाज सेवा)',
+    'hero.desc': 'ग़ाज़ीपुर, उत्तर प्रदेश (भारत) के ग्रामीण व मलिन बस्तियों के निर्धन बच्चों को निःशुल्क गुणवत्तापूर्ण शिक्षा, निराश्रितों को अन्नपूर्णा भोजन सेवा, स्वास्थ्य शिविर एवं सामाजिक उत्थान हेतु समर्पित संस्था।',
     'hero.btn_donate': 'सहयोग / दान करें',
     'hero.btn_volunteer': 'स्वयंसेवक बनें / प्रमाण पत्र प्राप्त करें',
     'hero.card_location': 'ग्राम मीरानपुर, मोहम्मदाबाद, गाजीपुर, उत्तर प्रदेश, भारत - 233303 (DIGIPIN 2J6T226CL2)',
@@ -174,7 +177,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Header & Brand
     'org.name': 'JEEVAN JYOTI FOUNDATION GHAZIPUR, UTTAR PRADESH, INDIA',
     'org.name_en': 'JEEVAN JYOTI FOUNDATION GHAZIPUR, UTTAR PRADESH, INDIA',
-    'org.tagline': 'Sewa • Education • Healthcare • Self Reliance',
+    'org.tagline': 'Sewa • Education • Healthcare',
     'org.reg_badge': 'Govt. Registered NGO (UP/2018/0207700)',
 
     // Nav
@@ -191,7 +194,7 @@ const translations: Record<Language, Record<string, string>> = {
     'hero.badge': 'Govt. Registered NGO (UP/2018/0207700)',
     'hero.title_hi': 'JEEVAN JYOTI FOUNDATION GHAZIPUR, UTTAR PRADESH, INDIA',
     'hero.title_en': 'Empowering Lives with Hope & Dignity',
-    'hero.tagline': 'Sewa • Education • Healthcare • Self Reliance',
+    'hero.tagline': 'Sewa • Education • Healthcare',
     'hero.desc': 'A grassroots NGO dedicated to providing free quality education to underprivileged children, daily meal distribution, rural healthcare camps, and women empowerment across Ghazipur, Uttar Pradesh, India.',
     'hero.btn_donate': 'Donate Now',
     'hero.btn_volunteer': 'Join as Volunteer / Get Certificate',
@@ -326,6 +329,65 @@ const translations: Record<Language, Record<string, string>> = {
     'footer.contact': 'Contact & Head Office',
     'footer.manager': 'Manager / Secretary',
     'footer.rights': 'All Rights Reserved.'
+  },
+
+  bho: {
+    'org.name': 'जीवन ज्योति फाउंडेशन ग़ाज़ीपुर, उत्तर प्रदेश, भारत',
+    'org.name_en': 'JEEVAN JYOTI FOUNDATION GHAZIPUR, UTTAR PRADESH, INDIA',
+    'org.tagline': 'सेवा • शिक्षा • स्वास्थ्य',
+    'org.reg_badge': 'सरकारी पंजीकृत संस्था (UP/2018/0207700)',
+    'nav.home': 'मुख्य पृष्ठ',
+    'nav.about': 'परिचय',
+    'nav.pillars': 'सेवा क्षेत्र',
+    'nav.volunteers': 'स्वयंसेवक साथी',
+    'nav.verify': 'प्रमाण पत्र सत्यापन',
+    'nav.stories': 'सेवा गाथा',
+    'nav.report': 'वार्षिक रिपोर्ट',
+    'nav.donate': 'सहयोग / दान करीं',
+    'hero.badge': 'भारत सरकार नीति आयोग पंजीकृत (UP/2018/0207700)',
+    'hero.title_hi': 'जीवन ज्योति फाउंडेशन ग़ाज़ीपुर',
+    'hero.tagline': 'सेवा • शिक्षा • स्वास्थ्य (समर्पित समाज सेवा)',
+    'hero.desc': 'ग़ाज़ीपुर के गरीब व जरूरतमंद लइकन के मुफ़्त बढ़िया पढ़ाई, भूखन खातिर अन्नपूर्णा भोजन सेवा, स्वास्थ्य जांच शिविर आ समाज कल्याण खातिर जुटल संस्था।',
+    'hero.btn_donate': 'सहयोग / दान करीं',
+    'hero.btn_volunteer': 'स्वयंसेवक बनीं / प्रमाण पत्र लीं',
+    'action.badge': 'जन सेवा एवं सत्यापन केंद्र',
+    'action.title': 'सेवा से जुड़ीं, तुरंत प्रमाण पत्र व पहचान पत्र पाईं',
+    'action.donate': 'सहयोग / दान करीं',
+    'action.donate_sub': 'दान फॉर्म',
+    'action.vol_cert': 'स्वयंसेवक प्रमाण पत्र',
+    'action.id_card': 'स्वयंसेवक ID कार्ड',
+    'action.tax_receipt': 'दान रसीद',
+    'action.task_cert': 'प्रशंसा पत्र',
+    'action.annual_report': 'वार्षिक रिपोर्ट',
+    'footer.rights': 'सर्वाधिकार सुरक्षित।'
+  },
+
+  sa: {
+    'org.name': 'जीवन ज्योति फाउंडेशन ग़ाज़ीपुरम्, उत्तरप्रदेशः, भारतम्',
+    'org.name_en': 'JEEVAN JYOTI FOUNDATION GHAZIPUR',
+    'org.tagline': 'सेवा • शिक्षा • स्वास्थ्यम्',
+    'org.reg_badge': 'शासकीय-पंजीकृत-संस्था (UP/2018/0207700)',
+    'nav.home': 'मुख्यपृष्ठम्',
+    'nav.about': 'परिचयः',
+    'nav.pillars': 'सेवास्तम्भाः',
+    'nav.volunteers': 'स्वयंसेवकाः',
+    'nav.verify': 'प्रमाणपत्र-सत्यापनम्',
+    'nav.stories': 'सेवागाथाः',
+    'nav.report': 'वार्षिकविवरणम्',
+    'nav.donate': 'दानं कुर्वन्तु',
+    'hero.badge': 'भारतसर्वकार-नीति-आयोगे पंजीकृतम् (UP/2018/0207700)',
+    'hero.title_hi': 'जीवन ज्योति फाउंडेशन ग़ाज़ीपुरम्',
+    'hero.tagline': 'सेवा • शिक्षा • स्वास्थ्यम्',
+    'hero.desc': 'ग़ाज़ीपुर-जनपदे निर्धनानां बालकानां निःशुल्कशिक्षायै, बुभुक्षितानां कृते अन्नपूर्णाभोजनसेवाये, स्वास्थ्यशिबिरेभ्यः च समर्पिता संस्था।',
+    'hero.btn_donate': 'दानं कुर्वन्तु',
+    'hero.btn_volunteer': 'स्वयंसेवको भवन्तु',
+    'action.badge': 'जनसेवा तथा सत्यापनकेन्द्रम्',
+    'action.title': 'सेवया युज्यन्ताम्, तत्क्षणं प्रमाणपत्रं प्राप्नुवन्तु',
+    'action.donate': 'दानं कुर्वन्तु',
+    'action.vol_cert': 'स्वयंसेवकप्रमाणपत्रम्',
+    'action.id_card': 'परिचयपत्रम्',
+    'action.tax_receipt': 'दानप्राप्तिपत्रम्',
+    'footer.rights': 'सर्वे अधिकाराः सुरक्षिताः।'
   }
 };
 
@@ -335,6 +397,8 @@ const defaultLanguageContext: LanguageContextType = {
   toggleLanguage: () => {},
   isHindi: true,
   isEnglish: false,
+  isBhojpuri: false,
+  isSanskrit: false,
   t: (key: string, hindiOrDefault?: string, englishText?: string): string => {
     if (translations.hi?.[key]) {
       return translations.hi[key];
@@ -343,14 +407,16 @@ const defaultLanguageContext: LanguageContextType = {
   }
 };
 
-const LanguageContext = createContext<LanguageContextType>(defaultLanguageContext);
+const LanguageContext = React.createContext<LanguageContextType>(defaultLanguageContext);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>(() => {
+  const [language, setLanguageState] = React.useState<Language>(() => {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
-        const saved = window.localStorage.getItem('jjf_portal_lang');
-        if (saved === 'en' || saved === 'hi') return saved;
+        const saved =
+          window.localStorage.getItem('jjf_portal_lang') ||
+          window.localStorage.getItem('jjf_selected_language');
+        if (saved) return saved;
       }
     } catch {
       // Ignore access errors in restricted environments
@@ -358,15 +424,27 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     return 'hi';
   });
 
+  // Initialize live DOM translation on mount
+  React.useEffect(() => {
+    initLiveTranslator();
+  }, []);
+
   const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
+    const validLang = lang || 'hi';
+    setLanguageState(validLang);
     try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem('jjf_portal_lang', lang);
+      if (typeof window !== 'undefined') {
+        if (window.localStorage) {
+          window.localStorage.setItem('jjf_portal_lang', validLang);
+          window.localStorage.setItem('jjf_selected_language', validLang);
+        }
+        document.documentElement.lang = validLang;
       }
     } catch {
       // Ignore write errors in restricted environments
     }
+    // Apply live in-memory translation across DOM and Google Translate
+    applyLiveTranslation(validLang);
   };
 
   const toggleLanguage = () => {
@@ -374,14 +452,29 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const t = (key: string, hindiOrDefault?: string, englishText?: string): string => {
-    if (translations[language]?.[key]) {
-      return translations[language][key];
+    const langDict = (translations as Record<string, Record<string, string>>)[language];
+    if (langDict && langDict[key]) {
+      return langDict[key];
     }
-    if (language === 'en') {
-      return englishText || hindiOrDefault || key;
+    // If not in target language, check if English text is available
+    if (language !== 'hi') {
+      if (translations.en?.[key]) {
+        return translations.en[key];
+      }
+      if (englishText) {
+        return englishText;
+      }
+    }
+    if (translations.hi?.[key]) {
+      return translations.hi[key];
     }
     return hindiOrDefault || key;
   };
+
+  const isHindi = language === 'hi';
+  const isEnglish = language === 'en';
+  const isBhojpuri = language === 'bho';
+  const isSanskrit = language === 'sa';
 
   return (
     <LanguageContext.Provider
@@ -389,8 +482,10 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
         language,
         setLanguage,
         toggleLanguage,
-        isHindi: language === 'hi',
-        isEnglish: language === 'en',
+        isHindi,
+        isEnglish,
+        isBhojpuri,
+        isSanskrit,
         t
       }}
     >
@@ -400,6 +495,6 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
 };
 
 export const useLanguage = (): LanguageContextType => {
-  const context = useContext(LanguageContext);
+  const context = React.useContext(LanguageContext);
   return context || defaultLanguageContext;
 };

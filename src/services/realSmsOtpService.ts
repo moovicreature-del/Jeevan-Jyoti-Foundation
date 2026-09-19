@@ -272,16 +272,26 @@ export async function sendRealOtp(req: SendOtpRequest): Promise<SendOtpResponse>
   lastOtpSentTimes.set(cleanPhone, now);
 
   // WhatsApp OTP Link for instant guaranteed delivery (especially for DND filtered numbers)
-  const orgName = 'जीवन ज्योति फाउंडेशन गाजीपुर';
-  const certRef = req.certificateId ? ` (${req.certificateId})` : '';
+  const orgName = 'जीवन ज्योति फाउंडेशन गाजीपुर (JJF Ghazipur)';
+  const certRef = req.certificateId ? ` [प्रमाण पत्र/ID: ${req.certificateId}]` : '';
+  const itemType = req.certificateType === 'staff_id' 
+    ? 'स्टाफ आई-कार्ड (Staff ID Card)' 
+    : req.certificateType === 'volunteer_id' 
+    ? 'स्वयंसेवक पहचान पत्र (Volunteer ID Card)' 
+    : 'आधिकारिक प्रमाण पत्र (Official Certificate)';
   const waMessage = encodeURIComponent(
-    `*${orgName}*\n\nनमस्ते ${req.recipientName || ''} जी,\nआपका आधिकारिक प्रमाण पत्र डाउनलोड${certRef} सत्यापन OTP है:\n\n*${generatedOtp}*\n\nयह कोड 10 मिनट के लिए मान्य है। कृपया इसे किसी के साथ साझा न करें।\nहेल्पलाइन: +91-8052361666`
+    `*${orgName}*\n\n` +
+    `नमस्ते ${req.recipientName || 'सम्मानित सदस्य'} जी,\n` +
+    `आपका ${itemType} डाउनलोड करने हेतु अधिकृत सुरक्षा सत्यापन OTP कोड है:\n\n` +
+    `🔑 *${generatedOtp}*\n\n` +
+    `📌 यह कोड 10 मिनट के लिए मान्य है। कृपया इसे किसी के साथ साझा न करें।${certRef}\n` +
+    `अधिकृत हेल्पलाइन: +91-8052361666 | Reg: UP/2018/0207700`
   );
   const whatsappUrl = `https://api.whatsapp.com/send?phone=91${cleanPhone}&text=${waMessage}`;
 
   return {
     success: true,
-    message: `✓ 6-अंकीय OTP पंजीकृत मोबाइल ${maskPhoneNumber(cleanPhone)} पर भेज दिया गया है।`,
+    message: `✓ 6-अंकीय OTP पंजीकृत मोबाइल ${maskPhoneNumber(cleanPhone)} पर SMS व WhatsApp द्वारा प्रेषित।`,
     sessionToken,
     maskedPhone: maskPhoneNumber(cleanPhone),
     channelUsed,
@@ -289,6 +299,20 @@ export async function sendRealOtp(req: SendOtpRequest): Promise<SendOtpResponse>
     deliveryStatus,
     whatsappUrl
   };
+}
+
+/**
+ * Automatically open WhatsApp to dispatch OTP to the registered mobile number
+ */
+export function autoOpenWhatsAppOtp(whatsappUrl?: string | null): boolean {
+  if (!whatsappUrl || typeof window === 'undefined') return false;
+  try {
+    const win = window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    return Boolean(win);
+  } catch (err) {
+    console.debug('[RealSmsOtp] Automatic WhatsApp open note:', err);
+    return false;
+  }
 }
 
 /**

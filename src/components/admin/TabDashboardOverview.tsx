@@ -34,10 +34,13 @@ import { useAdminAuth } from '../../context/AdminAuthContext';
 import { useHomeContent } from '../../context/HomeContentContext';
 import { useDonationPaymentSettings } from '../../hooks/useDonationPaymentSettings';
 import { getAllRegisteredCertificates, computeCertificatePipelineStats } from '../../services/certificateRegistryService';
+import { getAllStaffMembers } from '../../services/staffService';
 import { CertificateAnalyticsWidget } from './CertificateAnalyticsWidget';
+import { AdminTabType } from './AdminLayout';
+import { IdCard } from 'lucide-react';
 
 interface TabDashboardOverviewProps {
-  onSelectTab: (tab: 'certificates' | 'donations' | 'payment' | 'media' | 'notice' | 'text' | 'users') => void;
+  onSelectTab: (tab: AdminTabType) => void;
   onViewWebsite?: () => void;
   onOpenBackupModal?: () => void;
 }
@@ -52,6 +55,7 @@ export const TabDashboardOverview: React.FC<TabDashboardOverviewProps> = ({
   const { settings: paymentSettings } = useDonationPaymentSettings();
   const [certCount, setCertCount] = useState<number>(0);
   const [yearCount, setYearCount] = useState<number>(0);
+  const [pendingStaffCount, setPendingStaffCount] = useState<number>(0);
 
   useEffect(() => {
     try {
@@ -59,8 +63,12 @@ export const TabDashboardOverview: React.FC<TabDashboardOverviewProps> = ({
       const stats = computeCertificatePipelineStats(allCerts, '2026', 'all');
       setCertCount(stats.totalAllTime);
       setYearCount(stats.totalSelectedYear);
+
+      const staff = getAllStaffMembers();
+      const pending = staff.filter((s) => s.status === 'pending').length;
+      setPendingStaffCount(pending);
     } catch (e) {
-      console.warn('Error loading cert count for overview:', e);
+      console.warn('Error loading overview stats:', e);
     }
   }, []);
 
@@ -131,6 +139,50 @@ export const TabDashboardOverview: React.FC<TabDashboardOverviewProps> = ({
         >
           <Zap className="w-4 h-4 text-amber-600 fill-amber-600" />
           <span>QR / UPI बदलें</span>
+          <ArrowUpRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Featured Banner: Staff I-Card Approvals */}
+      <div className={`rounded-3xl p-6 shadow-md border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${
+        pendingStaffCount > 0
+          ? 'bg-gradient-to-r from-amber-950 via-slate-900 to-blue-950 border-amber-400 text-white ring-2 ring-amber-400/30'
+          : 'bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 border-slate-700 text-white'
+      }`}>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-amber-400 text-blue-950 flex items-center justify-center font-black shrink-0 shadow-md">
+            <IdCard className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/40 px-2 py-0.2 rounded-full font-black uppercase tracking-wider">
+                STAFF I-CARD APPROVALS
+              </span>
+              {pendingStaffCount > 0 ? (
+                <span className="text-xs bg-amber-400 text-blue-950 px-2 py-0.5 rounded-full font-black animate-pulse">
+                  {pendingStaffCount} नया आवेदन अनुमोदन हेतु लंबित
+                </span>
+              ) : (
+                <span className="text-xs text-slate-300">
+                  सभी आवेदन संसाधित
+                </span>
+              )}
+            </div>
+            <h2 className="text-base font-black text-white mt-0.5">
+              स्टाफ पहचान पत्र (I-Card) अनुमोदन एवं WhatsApp लिंक
+            </h2>
+            <p className="text-xs text-slate-300">
+              पंजीकृत स्टाफ की सूची देखें, स्वीकृति/अस्वीकृति प्रदान करें एवं WhatsApp पर सीधा डाउनलोड लिंक भेजें।
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => onSelectTab('staff_approval')}
+          className="flex items-center gap-2 px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-blue-950 font-black text-xs rounded-xl shadow-md transition cursor-pointer shrink-0"
+        >
+          <IdCard className="w-4 h-4" />
+          <span>स्टाफ अप्रूवल पोर्टल खोलें</span>
           <ArrowUpRight className="w-4 h-4" />
         </button>
       </div>

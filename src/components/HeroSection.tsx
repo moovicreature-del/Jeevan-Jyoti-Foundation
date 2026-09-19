@@ -8,7 +8,8 @@ import {
   Activity,
   Sparkles,
   Camera,
-  Building2
+  Building2,
+  Users
 } from 'lucide-react';
 import { FOUNDATION_INFO } from '../data/foundationData';
 import { useLanguage } from '../context/LanguageContext';
@@ -20,26 +21,35 @@ interface Props {
   onOpenDonate: () => void;
   onOpenVolunteerPortal: () => void;
   onOpenAdmin?: () => void;
+  onOpenStaff?: (tab?: 'options' | 'registration' | 'download') => void;
 }
 
 export const HeroSection: React.FC<Props> = ({
   onOpenDonate,
   onOpenVolunteerPortal,
-  onOpenAdmin
+  onOpenAdmin,
+  onOpenStaff
 }) => {
   const { t, isHindi } = useLanguage();
   const { content } = useHomeContent();
   const [activeHeroTab, setActiveHeroTab] = useState<'info' | 'slides'>('slides');
 
-  const displayTitle =
-    content.heroTitle || (isHindi ? FOUNDATION_INFO.nameHindi : FOUNDATION_INFO.nameEnglish);
-  const displaySubtitle =
-    content.heroSubtitle ||
-    t(
-      'hero.desc',
-      'ग़ाज़ीपुर के ग्रामीण व मलिन बस्तियों के निर्धन बच्चों को निःशुल्क गुणवत्तापूर्ण शिक्षा, निराश्रितों को अन्नपूर्णा भोजन सेवा, स्वास्थ्य शिविर एवं सामाजिक स्वावलंबन हेतु समर्पित संस्था।',
-      'A dedicated NGO empowering rural communities through free evening schools, daily meals, medical camps & women skill hubs in Ghazipur.'
-    );
+  const displayTitle = isHindi
+    ? (content.heroTitle || FOUNDATION_INFO.nameHindi)
+    : FOUNDATION_INFO.nameEnglish;
+
+  const displaySubtitle = isHindi
+    ? (content.heroSubtitle ||
+       t(
+         'hero.desc',
+         'ग़ाज़ीपुर के ग्रामीण व मलिन बस्तियों के निर्धन बच्चों को निःशुल्क गुणवत्तापूर्ण शिक्षा, निराश्रितों को अन्नपूर्णा भोजन सेवा, स्वास्थ्य शिविर एवं सामाजिक उत्थान हेतु समर्पित संस्था।',
+         'A dedicated NGO empowering rural communities through free evening schools, daily meals, medical camps & women skill hubs in Ghazipur.'
+       ))
+    : t(
+        'hero.desc',
+        'ग़ाज़ीपुर के ग्रामीण व मलिन बस्तियों के निर्धन बच्चों को निःशुल्क गुणवत्तापूर्ण शिक्षा, निराश्रितों को अन्नपूर्णा भोजन सेवा, स्वास्थ्य शिविर एवं सामाजिक उत्थान हेतु समर्पित संस्था।',
+        'A dedicated NGO empowering rural communities through free evening schools, daily meals, medical camps & women skill hubs in Ghazipur.'
+      );
 
   const slideCount = content.sliderPhotos?.length || 4;
 
@@ -100,6 +110,15 @@ export const HeroSection: React.FC<Props> = ({
                 <Award className="w-5 h-5 text-amber-600" />
                 <span>{t('hero.btn_volunteer', 'स्वयंसेवक बनें / प्रमाण पत्र प्राप्त करें', 'Join as Volunteer / Get Certificate')}</span>
               </button>
+
+              <button
+                onClick={() => onOpenStaff ? onOpenStaff('options') : window.dispatchEvent(new CustomEvent('open-staff-modal', { detail: { tab: 'options' } }))}
+                className="px-6 py-3.5 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-[#8B0000] border-2 border-amber-400 font-black rounded-2xl text-sm transition-all shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer transform hover:-translate-y-0.5"
+                title={isHindi ? "स्टाफ रजिस्ट्रेशन एवं आई-कार्ड डाउनलोड पोर्टल" : "Staff Registration & ID Card Portal"}
+              >
+                <Users className="w-5 h-5 text-[#8B0000]" />
+                <span>{isHindi ? '👥 स्टाफ रजिस्ट्रेशन व आई-कार्ड' : '👥 Staff Registration & ID'}</span>
+              </button>
             </div>
 
             {/* Micro Pillars Strip */}
@@ -146,7 +165,7 @@ export const HeroSection: React.FC<Props> = ({
                     }`}
                   >
                     <Camera className="w-3.5 h-3.5" />
-                    <span>लाइव फ़ोटो स्लाइड्स ({slideCount})</span>
+                    <span>{isHindi ? `लाइव फ़ोटो स्लाइड्स (${slideCount})` : `Live Photos (${slideCount})`}</span>
                   </button>
 
                   <button
@@ -158,7 +177,7 @@ export const HeroSection: React.FC<Props> = ({
                     }`}
                   >
                     <Building2 className="w-3.5 h-3.5" />
-                    <span>संस्था विवरण</span>
+                    <span>{isHindi ? 'संस्था विवरण' : 'NGO Profile'}</span>
                   </button>
                 </div>
 
@@ -174,13 +193,13 @@ export const HeroSection: React.FC<Props> = ({
                   <div className="flex items-center justify-between text-[11px] font-bold text-gray-600 px-1">
                     <span className="flex items-center gap-1 text-emerald-700">
                       <ShieldCheck className="w-3.5 h-3.5" />
-                      <span>स्वचालित लाइव सेवा चित्र</span>
+                      <span>{isHindi ? 'स्वचालित लाइव सेवा चित्र' : 'Auto Live Photos'}</span>
                     </span>
                     <button
                       onClick={() => setActiveHeroTab('info')}
                       className="text-amber-800 hover:underline font-extrabold cursor-pointer"
                     >
-                      संस्था पंजीयन देखें →
+                      {isHindi ? 'संस्था पंजीयन देखें →' : 'View NGO Reg →'}
                     </button>
                   </div>
                 </div>

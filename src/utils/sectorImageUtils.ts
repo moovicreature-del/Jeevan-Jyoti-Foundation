@@ -38,9 +38,9 @@ export const SECTOR_VISUALS: Record<string, SectorVisual> = {
   },
   women: {
     id: 'women',
-    titleHindi: 'महिला स्वावलंबन एवं कौशल विकास',
-    titleEnglish: 'Women Skill & Self Reliance',
-    tagline: 'सिलाई प्रशिक्षण, हस्तशिल्प और वित्तीय आत्मनिर्भरता',
+    titleHindi: 'महिला सशक्तीकरण एवं कौशल विकास',
+    titleEnglish: 'Women Skill & Empowerment',
+    tagline: 'सिलाई प्रशिक्षण, हस्तशिल्प और आर्थिक सशक्तिकरण',
     imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80',
     accentColor: '#7c3aed',
     iconName: 'Sparkles'

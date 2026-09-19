@@ -3,8 +3,8 @@ import { FoundationInfo } from '../types';
 export const FOUNDATION_INFO: FoundationInfo = {
   nameHindi: 'जीवन ज्योति फाउंडेशन ग़ाज़ीपुर, उत्तर प्रदेश, भारत',
   nameEnglish: 'JEEVAN JYOTI FOUNDATION, GHAZIPUR, UTTAR PRADESH, INDIA',
-  taglineHindi: 'सेवा • शिक्षा • स्वास्थ्य • स्वावलम्बन (समर्पित समाज सेवा)',
-  taglineEnglish: 'Sewa • Shiksha • Swasthya • Self Reliance',
+  taglineHindi: 'सेवा • शिक्षा • स्वास्थ्य (समर्पित समाज सेवा)',
+  taglineEnglish: 'Sewa • Shiksha • Swasthya',
   regNo: 'GAZ/03373',
   nitiAayogUid: 'UP/2018/0207700',
   pan: 'AAEAJ3141Q',

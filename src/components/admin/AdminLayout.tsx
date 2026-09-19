@@ -3,7 +3,7 @@
 // जीवन ज्योति फाउंडेशन - एडमिन डैशबोर्ड मुख्य लेआउट एवं साइडबार नेविगेशन
 // ============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard,
   Film,
@@ -19,7 +19,8 @@ import {
   Sparkles,
   ExternalLink,
   ChevronRight,
-  UserCheck
+  UserCheck,
+  IdCard
 } from 'lucide-react';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import { TabDashboardOverview } from './TabDashboardOverview';
@@ -30,14 +31,16 @@ import { TabUserManagement } from './TabUserManagement';
 import { TabDonationsBulkManager } from './TabDonationsBulkManager';
 import { TabDonationPaymentSettings } from './TabDonationPaymentSettings';
 import { TabCertificatePipelineDashboard } from './TabCertificatePipelineDashboard';
+import { TabStaffApprovalManager } from './TabStaffApprovalManager';
 import { TabSecuritySettings } from './TabSecuritySettings';
 import { Receipt, CreditCard, Award, Database, Download, KeyRound } from 'lucide-react';
 import { AdminUploadProgressProvider } from '../../context/AdminUploadProgressContext';
 import { AdminUploadProgressBar } from './AdminUploadProgressBar';
 import { BrandLogo } from '../common/BrandLogo';
 import { DataBackupModal } from './DataBackupModal';
+import { getAllStaffMembers } from '../../services/staffService';
 
-export type AdminTabType = 'dashboard' | 'certificates' | 'donations' | 'payment' | 'media' | 'notice' | 'text' | 'users' | 'security';
+export type AdminTabType = 'dashboard' | 'certificates' | 'staff_approval' | 'donations' | 'payment' | 'media' | 'notice' | 'text' | 'users' | 'security';
 
 interface AdminLayoutProps {
   onBackToWebsite: () => void;
@@ -49,6 +52,25 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ onBackToWebsite, onOpe
   const [activeTab, setActiveTab] = useState<AdminTabType>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState<boolean>(false);
+  const [pendingStaffCount, setPendingStaffCount] = useState<number>(0);
+
+  useEffect(() => {
+    const updatePendingCount = () => {
+      try {
+        const staff = getAllStaffMembers();
+        const pending = staff.filter((s) => s.status === 'pending').length;
+        setPendingStaffCount(pending);
+      } catch {
+        setPendingStaffCount(0);
+      }
+    };
+
+    updatePendingCount();
+    window.addEventListener('jjf-staff-updated', updatePendingCount);
+    return () => {
+      window.removeEventListener('jjf-staff-updated', updatePendingCount);
+    };
+  }, []);
 
   // Sidebar Menu Items Definition
   const menuItems = [
@@ -58,6 +80,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ onBackToWebsite, onOpe
       sublabel: 'मुख्य अवलोकन',
       icon: LayoutDashboard,
       superAdminOnly: false
+    },
+    {
+      id: 'staff_approval' as AdminTabType,
+      label: 'स्टाफ आई-कार्ड अप्रूवल',
+      sublabel: 'स्वीकृति/रिजेक्ट व WhatsApp लिंक',
+      icon: IdCard,
+      superAdminOnly: false,
+      badge: pendingStaffCount > 0 ? `${pendingStaffCount} नया` : 'Staff'
     },
     {
       id: 'certificates' as AdminTabType,
@@ -385,6 +415,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ onBackToWebsite, onOpe
               onOpenVerificationPortal={onOpenVerificationPortal}
             />
           )}
+          {activeTab === 'staff_approval' && <TabStaffApprovalManager />}
           {activeTab === 'donations' && <TabDonationsBulkManager />}
           {activeTab === 'payment' && <TabDonationPaymentSettings />}
           {activeTab === 'media' && <TabBannerMediaManager />}

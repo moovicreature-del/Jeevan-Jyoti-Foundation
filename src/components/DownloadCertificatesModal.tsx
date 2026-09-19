@@ -49,7 +49,8 @@ import {
   sendRealOtp,
   verifyRealOtp,
   maskPhoneNumber,
-  normalizeIndianPhone
+  normalizeIndianPhone,
+  autoOpenWhatsAppOtp
 } from '../services/realSmsOtpService';
 import {
   savePhoneCertificatesToOfflineCache,
@@ -100,7 +101,8 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
 }) => {
   // Wizard steps: 'phone' -> 'otp' -> 'list'
   const [step, setStep] = useState<'phone' | 'otp' | 'list'>('phone');
-  const [phoneNumber, setPhoneNumber] = useState(initialPhone || '8052361666');
+  // Manual entry: must be entered manually by user, never pre-filled
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
 
   // Network & Offline Cache States
@@ -176,38 +178,28 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
     };
   }, []);
 
-  // Reset or initialize on open
+  // Reset or initialize on open - strictly require manual entry
   useEffect(() => {
     if (isOpen) {
-      const activePhone = initialPhone && initialPhone.length >= 10 ? normalizePhoneNumber(initialPhone) : phoneNumber;
-      setPhoneNumber(activePhone);
+      setPhoneNumber('');
       setPhoneError(null);
       setOtpError(null);
-      setOtp(['', '', '', '']);
+      setOtp(['', '', '', '', '', '']);
       setOtpLoading(false);
-      setResendTimer(30);
+      setResendTimer(45);
       setCanResend(false);
       setDownloadProgressMsg(null);
       setDownloadingId(null);
       setIsResyncing(false);
       setEditingOfflineItem(null);
+      setCachedSessionInfo(null);
 
       // Load cached phone summaries from localStorage
       const summaries = getAllOfflineCachedPhoneSummaries();
       setOfflineRecentPhones(summaries);
-
-      // Check if current phone has cached certificates
-      const cached = getOfflineCachedCertificates(activePhone);
-      if (cached) {
-        setCachedSessionInfo(cached);
-      } else {
-        setCachedSessionInfo(null);
-      }
-
-      refreshIndexedDbMap(activePhone);
       setStep('phone');
     }
-  }, [isOpen, initialPhone]);
+  }, [isOpen]);
 
   // Timer countdown for OTP
   useEffect(() => {
@@ -264,7 +256,11 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
       if (res.success) {
         setSessionToken(res.sessionToken || null);
         setDeliveryStatus(res.deliveryStatus || 'SMS Gateway द्वारा प्रेषित');
-        if (res.whatsappUrl) setWhatsappUrl(res.whatsappUrl);
+        if (res.whatsappUrl) {
+          setWhatsappUrl(res.whatsappUrl);
+          // Automatically dispatch OTP to WhatsApp
+          autoOpenWhatsAppOtp(res.whatsappUrl);
+        }
       } else {
         setOtpError(res.message);
       }
@@ -366,7 +362,11 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
       if (res.success) {
         setSessionToken(res.sessionToken || null);
         setDeliveryStatus(res.deliveryStatus || 'SMS Gateway द्वारा प्रेषित');
-        if (res.whatsappUrl) setWhatsappUrl(res.whatsappUrl);
+        if (res.whatsappUrl) {
+          setWhatsappUrl(res.whatsappUrl);
+          // Automatically dispatch OTP to WhatsApp
+          autoOpenWhatsAppOtp(res.whatsappUrl);
+        }
       } else {
         setOtpError(res.message);
       }
@@ -871,35 +871,21 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
                   </div>
                 )}
 
-                {/* Cached Record Available Quick-Launch Banner */}
-                {cachedSessionInfo && cachedSessionInfo.certificates.length > 0 && (
-                  <div className="p-3.5 rounded-2xl bg-emerald-50 border-2 border-emerald-300 text-left flex items-center justify-between gap-3 shadow-xs">
-                    <div className="flex items-center gap-2.5">
-                      <HardDrive className="w-5 h-5 text-emerald-700 shrink-0" />
-                      <div className="text-xs">
-                        <span className="font-black text-emerald-900">
-                          💾 पंजीकृत रिकॉर्ड उपलब्ध ({cachedSessionInfo.certificates.length} प्रमाण पत्र)
-                        </span>
-                        <p className="text-[11px] text-emerald-700">
-                          सत्यापन स्थिति: अधिकृत • प्रमाण पत्र खोलने हेतु मोबाइल OTP सत्यापन आवश्यक है
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleSelectNumberAndSendOtp(phoneNumber)}
-                      className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs rounded-xl shadow-xs cursor-pointer flex items-center gap-1 shrink-0"
-                    >
-                      <KeyRound className="w-3.5 h-3.5" />
-                      <span>OTP भेजें व खोलें</span>
-                    </button>
+                {/* Security Note Banner */}
+                <div className="p-3.5 rounded-2xl bg-amber-50 border-2 border-amber-300 text-left flex items-start gap-3 shadow-xs">
+                  <ShieldCheck className="w-5 h-5 text-amber-800 shrink-0 mt-0.5" />
+                  <div className="text-xs space-y-1">
+                    <p className="font-black text-amber-900">सुरक्षा व गोपनीयता नियम (Mandatory Security Policy)</p>
+                    <p className="text-amber-800 leading-relaxed">
+                      प्रमाण पत्र एवं पहचान पत्र डाउनलोड केवल रजिस्ट्रेशन में दर्ज अधिकृत मोबाइल नंबर के OTP सत्यापन द्वारा ही सम्भव है। सुरक्षा कारणों से मोबाइल नंबर पहले से प्रदर्शित नहीं किया जाता, कृपया इसे स्वयं दर्ज करें। OTP आपके WhatsApp नंबर पर भी स्वतः भेजा जाएगा।
+                    </p>
                   </div>
-                )}
+                </div>
 
                 <form onSubmit={handleSendOtp} className="space-y-4 text-left">
                   <div>
                     <label className="block text-xs font-black text-slate-700 mb-1.5">
-                      10-अंकीय पंजीकृत मोबाइल नंबर (Registered Mobile Number) <span className="text-red-500">*</span>
+                      रजिस्ट्रेशन में भरा 10-अंकीय मोबाइल नंबर (Enter Registered Mobile) <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-500 text-sm">
@@ -908,15 +894,14 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
                       <input
                         type="tel"
                         maxLength={10}
+                        autoFocus
                         value={phoneNumber}
                         onChange={(e) => {
                           const val = e.target.value.replace(/\D/g, '');
                           setPhoneNumber(val);
                           setPhoneError(null);
-                          const cached = getOfflineCachedCertificates(normalizePhoneNumber(val));
-                          setCachedSessionInfo(cached);
                         }}
-                        placeholder="8052361666"
+                        placeholder="उदा. 98XXXXXXXX (10 अंक दर्ज करें)"
                         className="w-full pl-16 pr-4 py-3 bg-white border-2 border-slate-300 focus:border-amber-600 rounded-2xl text-base font-mono font-black focus:outline-none shadow-xs"
                       />
                     </div>
@@ -925,32 +910,9 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
                         {phoneError}
                       </p>
                     )}
-                  </div>
-
-                  {/* Quick Preset Demo Numbers */}
-                  <div>
-                    <span className="text-[11px] font-bold text-slate-500">त्वरित परीक्षण हेतु पंजीकृत नंबर चुनें:</span>
-                    <div className="flex flex-wrap gap-1.5 mt-1.5">
-                      {[
-                        { num: '8052361666', label: '8052361666 (मुख्य फाउंडेशन)' },
-                        { num: '9876543211', label: '9876543211 (आकाश वर्मा)' },
-                        { num: '9876543212', label: '9876543212 (पूजा पाण्डेय)' },
-                        { num: '9876543213', label: '9876543213 (राहुल यादव)' }
-                      ].map((preset) => (
-                        <button
-                          key={preset.num}
-                          type="button"
-                          onClick={() => handleQuickNumberSelect(preset.num)}
-                          className={`text-[11px] px-2.5 py-1 rounded-xl font-bold border transition-all cursor-pointer ${
-                            phoneNumber === preset.num
-                              ? 'bg-amber-900 text-white border-amber-900 shadow-xs'
-                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                          }`}
-                        >
-                          {preset.label}
-                        </button>
-                      ))}
-                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1.5">
+                      💡 फॉर्म में जो मोबाइल नंबर दर्ज किया गया था, वही 10 अंक दर्ज करें।
+                    </p>
                   </div>
 
                   <div className="space-y-2 pt-1">
@@ -959,51 +921,11 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
                       className="w-full py-3.5 bg-gradient-to-r from-[#8B0000] to-orange-700 hover:from-[#6d0000] hover:to-orange-800 text-white font-black text-sm rounded-2xl shadow-lg transition-all transform hover:-translate-y-0.5 cursor-pointer flex items-center justify-center gap-2"
                     >
                       <KeyRound className="w-4 h-4" />
-                      <span>OTP भेजें एवं आगे बढ़ें (Send Mandatory OTP)</span>
+                      <span>OTP भेजें (SMS व WhatsApp पर स्वतः प्रेषित)</span>
                       <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
                 </form>
-
-                {/* Offline Device Cache History */}
-                {offlineRecentPhones.length > 0 && (
-                  <div className="pt-3 border-t border-slate-200 text-left space-y-2">
-                    <div className="flex items-center justify-between text-xs text-slate-700 font-black">
-                      <div className="flex items-center gap-1.5">
-                        <History className="w-3.5 h-3.5 text-amber-800" />
-                        <span>इस डिवाइस पर सहेजे गए पंजीकृत नंबर (Saved Registered Numbers)</span>
-                      </div>
-                      <span className="text-[10px] text-slate-500 font-medium">
-                        {offlineRecentPhones.length} उपलब्ध
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {offlineRecentPhones.map((sess) => (
-                        <div
-                          key={sess.phone}
-                          onClick={() => handleSelectNumberAndSendOtp(sess.phone)}
-                          className="p-2.5 bg-white hover:bg-amber-50/80 rounded-xl border border-slate-200 hover:border-amber-400 transition-all cursor-pointer flex items-center justify-between shadow-2xs group"
-                        >
-                          <div className="space-y-0.5 min-w-0">
-                            <p className="text-xs font-mono font-black text-slate-900 group-hover:text-amber-900">
-                              +91-{sess.phone}
-                            </p>
-                            <p className="text-[10px] text-slate-500 flex items-center gap-1">
-                              <span>{sess.totalCount} प्रमाण पत्र</span>
-                              <span>•</span>
-                              <span>OTP सत्यापन आवश्यक</span>
-                            </p>
-                          </div>
-                          <span className="text-[11px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-lg group-hover:bg-amber-200 flex items-center gap-1">
-                            <KeyRound className="w-3 h-3" />
-                            OTP भेजें
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 <div className="pt-2 border-t border-slate-200 flex items-center justify-center gap-2 text-[11px] text-slate-500 font-semibold">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
@@ -1070,29 +992,33 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
                   </p>
                 )}
 
-                {/* WhatsApp fallback option */}
+                {/* WhatsApp Auto-Delivery & Quick Action */}
                 {whatsappUrl && (
-                  <div className="bg-emerald-50/80 border border-emerald-300/80 rounded-xl p-2.5 flex items-center justify-between text-left">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
-                        <MessageSquare className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="text-[11px] text-emerald-900 font-semibold leading-tight">
-                        <span>SMS नेटवर्क विलंब?</span>
-                        <span className="block text-[10px] text-emerald-700 font-normal">
-                          WhatsApp पर भी तत्काल OTP प्राप्त करें
-                        </span>
+                  <div className="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-3 text-left space-y-2 shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                          <MessageSquare className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="font-black text-emerald-950 text-xs block">
+                            WhatsApp पर भी OTP भेजा गया (Auto WhatsApp)
+                          </span>
+                          <span className="text-[11px] text-emerald-800">
+                            WhatsApp विंडो स्वतः खोली गई है। यदि बंद हो गई हो तो नीचे क्लिक करें:
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <a
-                      href={whatsappUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] px-2.5 py-1.5 rounded-lg shadow-xs transition-colors shrink-0"
+                    <button
+                      type="button"
+                      onClick={() => autoOpenWhatsAppOtp(whatsappUrl)}
+                      className="w-full inline-flex items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs py-2.5 px-3 rounded-xl shadow-xs transition-colors cursor-pointer"
                     >
-                      <span>WhatsApp OTP</span>
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span>WhatsApp पर तुरंत OTP देखें (Open WhatsApp OTP)</span>
                       <ExternalLink className="w-3 h-3" />
-                    </a>
+                    </button>
                   </div>
                 )}
 

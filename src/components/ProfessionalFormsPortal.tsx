@@ -52,6 +52,7 @@ interface Props {
   onOpenDonationCert: (donation: DonationRecord) => void;
   onOpenUpiDonate: () => void;
   onOpenVerifyModal?: (certId: string) => void;
+  onOpenStaff?: (tab?: 'options' | 'registration' | 'download') => void;
 }
 
 export type FormTab = 'appreciation' | 'volunteer' | 'festival' | 'verification' | 'donation';
@@ -65,7 +66,8 @@ export const ProfessionalFormsPortal: React.FC<Props> = ({
   onOpenFestivalCert,
   onOpenDonationCert,
   onOpenUpiDonate,
-  onOpenVerifyModal
+  onOpenVerifyModal,
+  onOpenStaff
 }) => {
   const { isHindi } = useLanguage();
   const [activeTab, setActiveTab] = useState<FormTab>(selectedTab || 'appreciation');
@@ -607,7 +609,9 @@ export const ProfessionalFormsPortal: React.FC<Props> = ({
                   JEEVAN JYOTI FOUNDATION
                 </h1>
                 <div className="text-sm sm:text-base font-extrabold text-[#8B0000] mt-1 tracking-wider">
-                  जीवन ज्योति फाउंडेशन • ग़ाज़ीपुर, उत्तर प्रदेश, भारत
+                  {isHindi
+                    ? 'जीवन ज्योति फाउंडेशन • ग़ाज़ीपुर, उत्तर प्रदेश, भारत'
+                    : 'Jeevan Jyoti Foundation • Ghazipur, UP, India'}
                 </div>
                 <div className="inline-flex items-center gap-2 mt-1.5 px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-100 to-green-100 border border-amber-300 text-xs sm:text-sm font-black text-green-900 tracking-widest uppercase">
                   <span>✨</span>
@@ -618,7 +622,9 @@ export const ProfessionalFormsPortal: React.FC<Props> = ({
             </div>
 
             <p className="text-gray-700 text-xs sm:text-sm max-w-2xl mx-auto font-medium mt-2">
-              संस्था के सभी 5 आधिकारिक डिजिटल आवेदन एवं प्रमाण पत्र प्रपत्र। अनिवार्य पासपोर्ट फोटो अपलोड एवं आधिकारिक सील व क्यूआर कोड सत्यापन सहित।
+              {isHindi
+                ? 'संस्था के सभी 5 आधिकारिक डिजिटल आवेदन एवं प्रमाण पत्र प्रपत्र। अनिवार्य पासपोर्ट फोटो अपलोड एवं आधिकारिक सील व क्यूआर कोड सत्यापन सहित।'
+                : 'Official 5 digital registration & certification forms of the foundation with mandatory passport photo upload, official seal and QR verification.'}
             </p>
 
             {/* Registration Strip */}
@@ -652,7 +658,9 @@ export const ProfessionalFormsPortal: React.FC<Props> = ({
             }`}>
               <Award className="w-5 h-5" />
             </div>
-            <span className="text-xs sm:text-sm font-black leading-tight">1. प्रशस्ति पत्र फॉर्म</span>
+            <span className="text-xs sm:text-sm font-black leading-tight">
+              {isHindi ? '1. प्रशस्ति पत्र फॉर्म' : '1. Appreciation Form'}
+            </span>
             <span className={`text-[10px] mt-0.5 ${activeTab === 'appreciation' ? 'text-amber-100' : 'text-gray-500'}`}>
               Appreciation Form
             </span>
@@ -672,7 +680,9 @@ export const ProfessionalFormsPortal: React.FC<Props> = ({
             }`}>
               <UserCheck className="w-5 h-5" />
             </div>
-            <span className="text-xs sm:text-sm font-black leading-tight">2. स्वयंसेवक फॉर्म</span>
+            <span className="text-xs sm:text-sm font-black leading-tight">
+              {isHindi ? '2. स्वयंसेवक फॉर्म' : '2. Volunteer Form'}
+            </span>
             <span className={`text-[10px] mt-0.5 ${activeTab === 'volunteer' ? 'text-green-100' : 'text-gray-500'}`}>
               Volunteer Reg.
             </span>
@@ -692,7 +702,9 @@ export const ProfessionalFormsPortal: React.FC<Props> = ({
             }`}>
               <span className="text-base">🪔</span>
             </div>
-            <span className="text-xs sm:text-sm font-black leading-tight">3. त्यौहार शुभकामना</span>
+            <span className="text-xs sm:text-sm font-black leading-tight">
+              {isHindi ? '3. त्यौहार शुभकामना' : '3. Festival Wishes'}
+            </span>
             <span className={`text-[10px] mt-0.5 ${activeTab === 'festival' ? 'text-orange-100' : 'text-gray-500'}`}>
               Festival Wishes
             </span>
@@ -712,7 +724,9 @@ export const ProfessionalFormsPortal: React.FC<Props> = ({
             }`}>
               <ShieldCheck className="w-5 h-5" />
             </div>
-            <span className="text-xs sm:text-sm font-black leading-tight">4. प्रमाण पत्र सत्यापन</span>
+            <span className="text-xs sm:text-sm font-black leading-tight">
+              {isHindi ? '4. प्रमाण पत्र सत्यापन' : '4. Verify & Download'}
+            </span>
             <span className={`text-[10px] mt-0.5 ${activeTab === 'verification' ? 'text-blue-100' : 'text-gray-500'}`}>
               Verify & Download
             </span>
@@ -732,7 +746,9 @@ export const ProfessionalFormsPortal: React.FC<Props> = ({
             }`}>
               <Heart className="w-5 h-5 fill-current" />
             </div>
-            <span className="text-xs sm:text-sm font-black leading-tight">5. दान रसीद फॉर्म</span>
+            <span className="text-xs sm:text-sm font-black leading-tight">
+              {isHindi ? '5. दान रसीद फॉर्म' : '5. Donation Receipt'}
+            </span>
             <span className={`text-[10px] mt-0.5 ${activeTab === 'donation' ? 'text-red-100' : 'text-gray-500'}`}>
               Donation Receipt Form
             </span>

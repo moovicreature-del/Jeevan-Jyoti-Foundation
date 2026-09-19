@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { FOUNDATION_INFO } from '../data/foundationData';
+import { applyLiveTranslation } from '../utils/liveUiTranslator';
 
 export interface LanguageOption {
   code: string;
@@ -62,9 +63,10 @@ declare global {
 
 interface TopLanguageBarProps {
   onOpenAdmin?: () => void;
+  onOpenStaff?: (tab?: 'options' | 'registration' | 'download') => void;
 }
 
-export const TopLanguageBar: React.FC<TopLanguageBarProps> = ({ onOpenAdmin }) => {
+export const TopLanguageBar: React.FC<TopLanguageBarProps> = ({ onOpenAdmin, onOpenStaff }) => {
   const { language, setLanguage } = useLanguage();
 
   const [selectedLang, setSelectedLang] = useState<string>(() => {
@@ -76,7 +78,12 @@ export const TopLanguageBar: React.FC<TopLanguageBarProps> = ({ onOpenAdmin }) =
           const code = parts[parts.length - 1];
           if (code) return code;
         }
-        return localStorage.getItem('jjf_selected_language') || language || 'hi';
+        return (
+          localStorage.getItem('jjf_selected_language') ||
+          localStorage.getItem('jjf_portal_lang') ||
+          language ||
+          'hi'
+        );
       }
     } catch {
       // Fallback
@@ -87,7 +94,30 @@ export const TopLanguageBar: React.FC<TopLanguageBarProps> = ({ onOpenAdmin }) =
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [fontSizeLevel, setFontSizeLevel] = useState<number>(100);
+  const [langToast, setLangToast] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Sync selectedLang if LanguageContext changes
+  useEffect(() => {
+    if (language && language !== selectedLang) {
+      setSelectedLang(language);
+    }
+  }, [language]);
+
+  // Helper to trigger Google Translate's hidden combo box
+  const triggerGoogleTranslateCombo = useCallback((langCode: string): boolean => {
+    if (typeof document === 'undefined') return false;
+    const select =
+      document.querySelector<HTMLSelectElement>('select.goog-te-combo') ||
+      document.querySelector<HTMLSelectElement>('#google_translate_element select');
+    if (select) {
+      select.value = langCode;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      select.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    }
+    return false;
+  }, []);
 
   // Initialize Google Translate Script safely after mount
   useEffect(() => {
@@ -101,12 +131,20 @@ export const TopLanguageBar: React.FC<TopLanguageBarProps> = ({ onOpenAdmin }) =
             new window.google.translate.TranslateElement(
               {
                 pageLanguage: 'hi',
-                includedLanguages: 'hi,en,bho,sa,bn,mr,gu,ta,te,ur,pa,or,ml,kn,as,ne,es,fr,ar,de,ru,ja,zh-CN',
-                layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE,
                 autoDisplay: false
               },
               'google_translate_element'
             );
+
+            // If a language other than Hindi is already active, re-trigger
+            setTimeout(() => {
+              const current =
+                localStorage.getItem('jjf_selected_language') ||
+                localStorage.getItem('jjf_portal_lang');
+              if (current && current !== 'hi') {
+                triggerGoogleTranslateCombo(current);
+              }
+            }, 600);
           }
         }
       } catch (err) {
@@ -122,12 +160,13 @@ export const TopLanguageBar: React.FC<TopLanguageBarProps> = ({ onOpenAdmin }) =
       script.id = 'google-translate-script';
       script.type = 'text/javascript';
       script.async = true;
-      script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      script.src =
+        'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
       document.body.appendChild(script);
     } else if (window.google && window.google.translate) {
       initTranslate();
     }
-  }, []);
+  }, [triggerGoogleTranslateCombo]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -141,49 +180,76 @@ export const TopLanguageBar: React.FC<TopLanguageBarProps> = ({ onOpenAdmin }) =
   }, []);
 
   // Change language function
-  const handleSelectLanguage = useCallback((langCode: string) => {
-    setSelectedLang(langCode);
-    setIsDropdownOpen(false);
+  const handleSelectLanguage = useCallback(
+    (langCode: string) => {
+      const targetLang = langCode || 'hi';
+      setSelectedLang(targetLang);
+      setIsDropdownOpen(false);
 
-    try {
-      localStorage.setItem('jjf_selected_language', langCode);
-    } catch {
-      // Ignore
-    }
-
-    // 1. Sync React context for Hindi/English
-    if (langCode === 'en') {
-      setLanguage('en');
-    } else if (langCode === 'hi') {
-      setLanguage('hi');
-    }
-
-    // 2. Set Google Translate cookie
-    try {
-      const domain = window.location.hostname;
-      if (langCode === 'hi') {
-        // Clear translation to restore native Hindi
-        document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${domain};`;
-        const select = document.querySelector<HTMLSelectElement>('#google_translate_element select');
-        if (select) {
-          select.value = 'hi';
-          select.dispatchEvent(new Event('change'));
+      // 1. Immediately update React Context & HTML attribute & Storage
+      setLanguage(targetLang);
+      try {
+        localStorage.setItem('jjf_selected_language', targetLang);
+        localStorage.setItem('jjf_portal_lang', targetLang);
+        if (typeof document !== 'undefined') {
+          document.documentElement.lang = targetLang;
         }
-      } else {
-        document.cookie = `googtrans=/hi/${langCode}; path=/;`;
-        document.cookie = `googtrans=/hi/${langCode}; path=/; domain=${domain};`;
-
-        const select = document.querySelector<HTMLSelectElement>('#google_translate_element select');
-        if (select) {
-          select.value = langCode;
-          select.dispatchEvent(new Event('change'));
-        }
+      } catch {
+        // Ignore storage errors
       }
-    } catch (e) {
-      console.debug('Language translation cookie note:', e);
-    }
-  }, [setLanguage]);
+
+      // 2. Trigger instant in-memory DOM & Text node translation
+      applyLiveTranslation(targetLang);
+
+      // 3. Show instant visual notification
+      const matched = ALL_LANGUAGES.find((l) => l.code === targetLang);
+      if (matched) {
+        setLangToast(`${matched.flag} भाषा बदली गई: ${matched.nativeName} (${matched.name})`);
+        setTimeout(() => setLangToast(null), 3200);
+      }
+
+      // 2. Set Google Translate cookies across all scopes
+      try {
+        const domain = window.location.hostname;
+        if (targetLang === 'hi') {
+          // Clear translation to restore native Hindi
+          document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          if (domain && domain.includes('.')) {
+            document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${domain};`;
+            const parts = domain.split('.');
+            if (parts.length > 2) {
+              const parentDomain = '.' + parts.slice(-2).join('.');
+              document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${parentDomain};`;
+            }
+          }
+        } else {
+          document.cookie = `googtrans=/hi/${targetLang}; path=/; max-age=31536000;`;
+          if (domain && domain.includes('.')) {
+            document.cookie = `googtrans=/hi/${targetLang}; path=/; domain=${domain}; max-age=31536000;`;
+            const parts = domain.split('.');
+            if (parts.length > 2) {
+              const parentDomain = '.' + parts.slice(-2).join('.');
+              document.cookie = `googtrans=/hi/${targetLang}; path=/; domain=${parentDomain}; max-age=31536000;`;
+            }
+          }
+        }
+      } catch (e) {
+        console.debug('Language translation cookie note:', e);
+      }
+
+      // 3. Trigger Google Translate combobox element with retry polling
+      if (!triggerGoogleTranslateCombo(targetLang)) {
+        let attempts = 0;
+        const interval = setInterval(() => {
+          attempts++;
+          if (triggerGoogleTranslateCombo(targetLang) || attempts >= 25) {
+            clearInterval(interval);
+          }
+        }, 120);
+      }
+    },
+    [setLanguage, triggerGoogleTranslateCombo]
+  );
 
   // Font resize accessibility
   const adjustFontSize = useCallback((delta: number) => {
@@ -456,9 +522,29 @@ export const TopLanguageBar: React.FC<TopLanguageBarProps> = ({ onOpenAdmin }) =
           </div>
 
           {/* Hidden Google Translate Target Container (Shielded with suppressHydrationWarning) */}
-          <div id="google_translate_element" className="hidden" suppressHydrationWarning />
+          <div
+            id="google_translate_element"
+            style={{
+              position: 'absolute',
+              left: '-9999px',
+              top: '-9999px',
+              width: '1px',
+              height: '1px',
+              opacity: 0,
+              pointerEvents: 'none',
+              overflow: 'hidden'
+            }}
+            suppressHydrationWarning
+          />
         </div>
       </div>
+
+      {/* Floating Language Confirmation Toast */}
+      {langToast && (
+        <div className="fixed top-12 right-4 z-50 animate-bounce bg-emerald-700 text-white text-xs font-black px-4 py-2 rounded-xl shadow-2xl border-2 border-emerald-300 flex items-center gap-2">
+          <span>{langToast}</span>
+        </div>
+      )}
     </div>
   );
 };

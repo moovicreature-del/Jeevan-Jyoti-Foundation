@@ -164,7 +164,7 @@ export const TabHomeTextEditor: React.FC = () => {
                   value={heroSubtitle}
                   onFocus={() => setActivePreview('hero')}
                   onChange={(e) => setHeroSubtitle(e.target.value)}
-                  placeholder="ग़ाज़ीपुर के हर वंचित वर्ग तक शिक्षा, स्वास्थ्य, अन्न और स्वावलंबन पहुँचाने का पवित्र सामाजिक संकल्प।"
+                  placeholder="ग़ाज़ीपुर के हर वंचित वर्ग तक शिक्षा, स्वास्थ्य और अन्न पहुँचाने का पवित्र सामाजिक संकल्प।"
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-700 leading-relaxed"
                   required
                 />
@@ -218,7 +218,7 @@ export const TabHomeTextEditor: React.FC = () => {
                   value={missionText}
                   onFocus={() => setActivePreview('mission')}
                   onChange={(e) => setMissionText(e.target.value)}
-                  placeholder="शिक्षा का प्रकाश, स्वास्थ्य शिविर, युवा स्वावलंबन और नारी सशक्तीकरण..."
+                  placeholder="शिक्षा का प्रकाश, स्वास्थ्य शिविर और नारी सशक्तीकरण..."
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-700 leading-relaxed"
                   required
                 />
@@ -319,7 +319,7 @@ export const TabHomeTextEditor: React.FC = () => {
                       {heroTitle || 'रोशनी बनो किसी के अंधेरे जीवन की'}
                     </h3>
                     <p className="text-xs text-slate-300 leading-relaxed max-w-md mx-auto">
-                      {heroSubtitle || 'ग़ाज़ीपुर के हर वंचित वर्ग तक शिक्षा, स्वास्थ्य, अन्न और स्वावलंबन पहुँचाने का संकल्प।'}
+                      {heroSubtitle || 'ग़ाज़ीपुर के हर वंचित वर्ग तक शिक्षा, स्वास्थ्य और अन्न पहुँचाने का संकल्प।'}
                     </p>
                   </div>
                 )}
@@ -343,7 +343,7 @@ export const TabHomeTextEditor: React.FC = () => {
                       <span>हमारा मिशन (Our Mission & Vision)</span>
                     </div>
                     <p className="text-xs text-slate-300 leading-relaxed">
-                      {missionText || 'शिक्षा का प्रकाश, स्वास्थ्य शिविर, युवा स्वावलंबन और नारी सशक्तीकरण द्वारा समाज का विकास।'}
+                      {missionText || 'शिक्षा का प्रकाश, स्वास्थ्य शिविर और नारी सशक्तीकरण द्वारा समाज का विकास।'}
                     </p>
                   </div>
                 )}

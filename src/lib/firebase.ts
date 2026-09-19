@@ -17,6 +17,8 @@ import {
   memoryLocalCache,
   getFirestore,
   setLogLevel,
+  disableNetwork,
+  enableNetwork,
   Firestore
 } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
@@ -67,12 +69,17 @@ export const isMockFirebase = !firebaseConfig.apiKey || firebaseConfig.apiKey ==
 
 // Suppress benign connection retry / streaming fallback warnings in iframe/sandboxed environments
 try {
-  setLogLevel('error');
+  setLogLevel('silent');
 } catch {
   // Ignore
 }
 
-// Firestore Database Service with In-Memory Cache and forced long-polling for stable network ingress
+// Track whether Firestore backend is actively connected or operating in offline mode
+let isFirestoreOnlineState = false;
+
+export const isFirestoreOnline = (): boolean => isFirestoreOnlineState;
+
+// Firestore Database Service with In-Memory Cache and auto-detecting transport
 export const db: Firestore = (() => {
   try {
     const databaseId =
@@ -84,10 +91,38 @@ export const db: Firestore = (() => {
       app,
       {
         localCache: memoryLocalCache(),
-        experimentalForceLongPolling: true,
+        experimentalAutoDetectLongPolling: true,
       },
       databaseId
     );
+
+    // If running in browser, verify if the Cloud Firestore backend is active
+    if (typeof window !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.projectId) {
+      const probeUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents?key=${firebaseConfig.apiKey}`;
+      fetch(probeUrl, { method: 'GET' })
+        .then(async (res) => {
+          if (res.status === 404 || !res.ok) {
+            // Database not provisioned on Google Cloud yet; operate cleanly in offline mode
+            isFirestoreOnlineState = false;
+            try {
+              await disableNetwork(firestoreInstance);
+            } catch {
+              // Ignore
+            }
+          } else {
+            isFirestoreOnlineState = true;
+          }
+        })
+        .catch(async () => {
+          // Network unreachable; ensure smooth offline mode without retrying indefinitely
+          isFirestoreOnlineState = false;
+          try {
+            await disableNetwork(firestoreInstance);
+          } catch {
+            // Ignore
+          }
+        });
+    }
 
     return firestoreInstance;
   } catch (error) {

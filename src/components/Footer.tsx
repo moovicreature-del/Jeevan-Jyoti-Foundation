@@ -222,7 +222,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
             {content.footerText || `© ${new Date().getFullYear()} ${FOUNDATION_INFO.nameEnglish} (ग़ाज़ीपुर). ${t('footer.rights', 'सर्वाधिकार सुरक्षित।', 'All rights reserved.')}`}
           </div>
           <div className="flex items-center gap-1 text-gray-400 font-bold">
-            <span>{isHindi ? 'सेवा • शिक्षा • स्वास्थ्य • स्वावलंबन' : 'Sewa • Education • Healthcare • Self Reliance'}</span>
+            <span>{isHindi ? 'सेवा • शिक्षा • स्वास्थ्य' : 'Sewa • Education • Healthcare'}</span>
           </div>
         </div>
       </div>

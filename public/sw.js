@@ -55,6 +55,16 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
+  // Never intercept Vite development endpoints, HMR, or raw TypeScript/JSX source modules
+  if (
+    url.pathname.startsWith('/@') ||
+    url.pathname.startsWith('/src/') ||
+    url.pathname.startsWith('/node_modules/') ||
+    url.searchParams.has('import')
+  ) {
+    return;
+  }
+
   // For API requests, use Network-First with JSON fallback if offline
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(

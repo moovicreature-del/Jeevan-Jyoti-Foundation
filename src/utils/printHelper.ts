@@ -178,7 +178,9 @@ export async function downloadElementAsPdf(
       scale: 3,
       backgroundColor: '#ffffff',
       useCORS: true,
-      allowTaint: true,
+      allowTaint: false,
+      scrollX: 0,
+      scrollY: 0,
       logging: false,
       ignoreElements: (node) => {
         if (node instanceof HTMLElement && (node.classList.contains('no-print') || node.classList.contains('no-export'))) {
@@ -233,7 +235,8 @@ export async function downloadElementAsPdf(
         pixelRatio: 2,
         backgroundColor: '#ffffff',
         cacheBust: true,
-        skipFonts: true
+        skipFonts: true,
+        fontEmbedCSS: ''
       });
 
       const pdf = new jsPDF({

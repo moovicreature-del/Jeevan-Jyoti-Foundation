@@ -169,7 +169,7 @@ export const DONORS_DATA: DonationRecord[] = [
     amount: 10000,
     date: '2026-03-22',
     purpose: 'Women Skill Development & Sewing Machine Distribution',
-    purposeHindi: 'महिला स्वावलंबन एवं सिलाई प्रशिक्षण केंद्र',
+    purposeHindi: 'महिला सशक्तीकरण एवं सिलाई प्रशिक्षण केंद्र',
     paymentMode: 'Net Banking',
     transactionRef: 'NET/HDFC260322441',
     taxExemptEligible: true,

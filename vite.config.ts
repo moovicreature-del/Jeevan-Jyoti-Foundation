@@ -154,10 +154,26 @@ function apiDevServerPlugin(): Plugin {
 export default defineConfig({
   plugins: [react(), tailwindcss(), apiDevServerPlugin()],
   resolve: {
+    alias: {
+      react: path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom')
+    },
     dedupe: [
       'react',
       'react-dom',
+      'react-dom/client',
+      'react/jsx-runtime',
+      'react/jsx-dev-runtime',
       'firebase'
+    ]
+  },
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-dom/client',
+      'react/jsx-runtime',
+      'react/jsx-dev-runtime'
     ]
   },
   server: {

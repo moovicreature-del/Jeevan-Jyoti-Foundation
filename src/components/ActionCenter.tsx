@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, UserCheck, ShieldCheck, Download, Award, FileText, Sparkles, QrCode, Zap, HardDrive } from 'lucide-react';
+import { Heart, UserCheck, ShieldCheck, Download, Award, FileText, Sparkles, QrCode, Zap, HardDrive, Users } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 interface ActionCenterProps {
@@ -15,6 +15,7 @@ interface ActionCenterProps {
   onOpenLeaderboard?: () => void;
   onOpenDownloadCertificates?: () => void;
   onOpenGoogleDrive?: () => void;
+  onOpenStaff?: (tab?: 'options' | 'registration' | 'download') => void;
 }
 
 export const ActionCenter: React.FC<ActionCenterProps> = ({
@@ -27,9 +28,10 @@ export const ActionCenter: React.FC<ActionCenterProps> = ({
   onOpenAnnualReport,
   onOpenFestivalPortal,
   onOpenDownloadCertificates,
-  onOpenGoogleDrive
+  onOpenGoogleDrive,
+  onOpenStaff
 }) => {
-  const { t } = useLanguage();
+  const { t, isHindi } = useLanguage();
 
   return (
     <section id="action-center" className="py-12 bg-gradient-to-r from-orange-600 via-amber-600 to-amber-700 text-white relative overflow-hidden shadow-lg">
@@ -52,8 +54,8 @@ export const ActionCenter: React.FC<ActionCenterProps> = ({
           </p>
         </div>
 
-        {/* Action Buttons Grid - 10 Column Layout */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-10 gap-2.5 sm:gap-3">
+        {/* Action Buttons Grid - 11 Column / Responsive Layout */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-11 gap-2.5 sm:gap-3">
           {/* 1. Quick Donate QR - Rapid 1-Tap Mobile Payment Overlay */}
           <button
             onClick={onOpenQuickDonate || onOpenDonate}
@@ -86,11 +88,29 @@ export const ActionCenter: React.FC<ActionCenterProps> = ({
             </span>
           </button>
 
+          {/* 3. Staff Registration & I-Card Portal (High Visibility) */}
+          <button
+            onClick={() => onOpenStaff ? onOpenStaff('options') : window.dispatchEvent(new CustomEvent('open-staff-modal', { detail: { tab: 'options' } }))}
+            className="flex flex-col items-center justify-center p-3 rounded-2xl bg-gradient-to-b from-[#8B0000] via-red-950 to-amber-950 text-yellow-300 hover:brightness-110 font-bold text-xs shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 cursor-pointer group text-center border-2 border-amber-400 relative overflow-hidden ring-2 ring-amber-400/50"
+            title={isHindi ? "स्टाफ रजिस्ट्रेशन एवं आई-कार्ड डाउनलोड (1. रजिस्ट्रेशन | 2. आई-कार्ड डाउनलोड)" : "Staff Registration & ID Card Portal"}
+          >
+            <div className="absolute -top-6 -right-6 w-12 h-12 bg-amber-400/20 rounded-full blur-xs" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-400 text-slate-950 flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform shadow-md font-black">
+              <Users className="w-5 h-5 text-slate-950" />
+            </div>
+            <span className="font-black text-white text-[11px] sm:text-xs leading-tight">
+              {t('action.staff_reg', 'स्टाफ रजिस्ट्रेशन', 'Staff Portal')}
+            </span>
+            <span className="text-[9px] text-yellow-300 font-extrabold mt-0.5 bg-black/40 px-1.5 py-0.5 rounded-full border border-yellow-400/40">
+              {t('action.staff_sub', 'रजिस्ट्रेशन व आई-कार्ड', 'Registration & ID')}
+            </span>
+          </button>
+
           {/* 3. Donate Now Registration Form */}
           <button
             onClick={onOpenDonate}
             className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white text-orange-700 hover:bg-orange-50 font-bold text-xs shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 cursor-pointer group text-center"
-            title="दान पंजीकरण व रसीद फॉर्म खोलें"
+            title={isHindi ? "दान पंजीकरण व रसीद फॉर्म खोलें" : "Open Donation Form"}
           >
             <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
               <Heart className="w-5 h-5 text-red-600 fill-red-600" />
@@ -103,13 +123,17 @@ export const ActionCenter: React.FC<ActionCenterProps> = ({
           <button
             onClick={onOpenFestivalPortal}
             className="flex flex-col items-center justify-center p-3 rounded-2xl bg-gradient-to-b from-amber-400 to-yellow-500 text-amber-950 hover:brightness-105 font-bold text-xs shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 cursor-pointer group text-center border-2 border-yellow-200"
-            title="पावन पर्व व उत्सव शुभकामना पत्र फॉर्म खोलें"
+            title={isHindi ? "पावन पर्व व उत्सव शुभकामना पत्र फॉर्म खोलें" : "Festival Greetings Form"}
           >
             <div className="w-10 h-10 rounded-xl bg-white/90 flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform shadow-xs text-lg">
               🪔
             </div>
-            <span className="font-black text-amber-950">त्यौहार शुभकामना</span>
-            <span className="text-[9px] text-amber-900 font-extrabold mt-0.5">शुभकामना फॉर्म</span>
+            <span className="font-black text-amber-950">
+              {t('action.fest_wishes', 'त्यौहार शुभकामना', 'Festival Wishes')}
+            </span>
+            <span className="text-[9px] text-amber-900 font-extrabold mt-0.5">
+              {t('action.fest_sub', 'शुभकामना फॉर्म', 'Greetings Form')}
+            </span>
           </button>
 
           {/* 5. Volunteer Certificate Registration Form */}
@@ -181,13 +205,15 @@ export const ActionCenter: React.FC<ActionCenterProps> = ({
           <button
             onClick={onOpenGoogleDrive}
             className="flex flex-col items-center justify-center p-3 rounded-2xl bg-gradient-to-b from-indigo-900 to-blue-950 text-indigo-200 hover:brightness-110 font-bold text-xs shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 cursor-pointer group text-center border-2 border-indigo-400"
-            title="गूगल ड्राइव दस्तावेज़ हब व क्लाउड बैकअप खोलें"
+            title={isHindi ? "गूगल ड्राइव दस्तावेज़ हब व क्लाउड बैकअप खोलें" : "Open Google Drive Documents Hub"}
           >
             <div className="w-10 h-10 rounded-xl bg-indigo-500 text-white flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform shadow-xs">
               <HardDrive className="w-5 h-5 text-yellow-300" />
             </div>
             <span className="font-black text-white">Google Drive</span>
-            <span className="text-[9px] text-indigo-300 font-extrabold mt-0.5">दस्तावेज़ ड्राइव</span>
+            <span className="text-[9px] text-indigo-300 font-extrabold mt-0.5">
+              {t('action.drive_sub', 'दस्तावेज़ ड्राइव', 'Document Hub')}
+            </span>
           </button>
         </div>
       </div>

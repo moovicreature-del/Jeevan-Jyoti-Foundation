@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Award, ShieldCheck, Menu, X, Phone, Globe, QrCode, Lock, Smartphone, Download, HardDrive } from 'lucide-react';
+import { Heart, Award, ShieldCheck, Menu, X, Phone, Globe, QrCode, Lock, Smartphone, Download, HardDrive, Users, UserPlus, ChevronDown } from 'lucide-react';
 import { FOUNDATION_INFO } from '../data/foundationData';
 import { useLanguage } from '../context/LanguageContext';
 import { BrandLogo } from './common/BrandLogo';
@@ -10,16 +10,17 @@ interface Props {
   onOpenReport: () => void;
   onOpenAdmin?: () => void;
   onOpenGoogleDrive?: () => void;
+  onOpenStaff?: (tab?: 'options' | 'registration' | 'download') => void;
 }
 
-export const Navbar: React.FC<Props> = ({ onOpenDonate, onOpenReport, onOpenAdmin, onOpenGoogleDrive }) => {
-  const { language, setLanguage, t } = useLanguage();
+export const Navbar: React.FC<Props> = ({ onOpenDonate, onOpenReport, onOpenAdmin, onOpenGoogleDrive, onOpenStaff }) => {
+  const { language, setLanguage, isHindi, t } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-amber-200 shadow-xs">
       {/* Top Comprehensive Translation & Multi-Language Bar */}
-      <TopLanguageBar onOpenAdmin={onOpenAdmin} />
+      <TopLanguageBar onOpenAdmin={onOpenAdmin} onOpenStaff={onOpenStaff} />
 
       {/* Main Navigation Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between">
@@ -41,13 +42,15 @@ export const Navbar: React.FC<Props> = ({ onOpenDonate, onOpenReport, onOpenAdmi
               JEEVAN JYOTI FOUNDATION
             </div>
             <div className="text-[11px] font-extrabold text-amber-700 leading-tight mt-0.5 tracking-wide">
-              जीवन ज्योति फाउंडेशन • ग़ाज़ीपुर, उत्तर प्रदेश, भारत
+              {isHindi
+                ? 'जीवन ज्योति फाउंडेशन • ग़ाज़ीपुर, उत्तर प्रदेश, भारत'
+                : 'Jeevan Jyoti Foundation • Ghazipur, UP, India'}
             </div>
           </div>
         </a>
 
         {/* Desktop Links */}
-        <nav className="hidden lg:flex items-center gap-5 text-sm font-bold text-gray-800">
+        <nav className="hidden lg:flex items-center gap-4 text-sm font-bold text-gray-800">
           <a href="#about" className="hover:text-[#8B0000] transition-colors">
             {t('nav.about', 'परिचय', 'About')}
           </a>
@@ -56,11 +59,12 @@ export const Navbar: React.FC<Props> = ({ onOpenDonate, onOpenReport, onOpenAdmi
           </a>
           <a href="#official-forms" className="hover:text-[#8B0000] transition-colors flex items-center gap-1 text-green-900 bg-green-100/90 px-2.5 py-1 rounded-xl border border-green-300">
             <span>📝</span>
-            <span>5 ऑनलाइन फॉर्म (5 Forms)</span>
+            <span>{isHindi ? '5 फॉर्म' : '5 Forms'}</span>
           </a>
+
           <a href="#festivals" className="hover:text-[#8B0000] transition-colors flex items-center gap-1 text-amber-900 bg-amber-100/90 px-2.5 py-1 rounded-xl border border-amber-300">
             <span>🪔</span>
-            <span>त्यौहार शुभकामना</span>
+            <span>{isHindi ? 'त्यौहार' : 'Festivals'}</span>
           </a>
           <a href="#volunteers" className="hover:text-[#8B0000] transition-colors">
             {t('nav.volunteers', 'स्वयंसेवक', 'Volunteers')}
@@ -76,18 +80,18 @@ export const Navbar: React.FC<Props> = ({ onOpenDonate, onOpenReport, onOpenAdmi
           <button
             onClick={() => window.dispatchEvent(new CustomEvent('open-pwa-install-modal'))}
             className="px-3 py-2 bg-gradient-to-r from-amber-400 to-yellow-300 hover:from-amber-300 hover:to-yellow-200 text-[#8B0000] font-black text-xs rounded-xl shadow-xs border border-amber-400 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105"
-            title="आधिकारिक मोबाइल / डेस्कटॉप ऐप इंस्टॉल करें"
+            title={isHindi ? "आधिकारिक मोबाइल / डेस्कटॉप ऐप इंस्टॉल करें" : "Install Official App"}
           >
             <Smartphone className="w-3.5 h-3.5" />
-            <span>ऐप इंस्टॉल करें</span>
+            <span>{isHindi ? 'ऐप इंस्टॉल करें' : 'Install App'}</span>
           </button>
           <button
             onClick={onOpenGoogleDrive}
             className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-900 font-bold text-xs rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
-            title="गूगल ड्राइव दस्तावेज़ केंद्र (Google Drive Document Hub)"
+            title={isHindi ? "गूगल ड्राइव दस्तावेज़ केंद्र (Google Drive Document Hub)" : "Google Drive Document Hub"}
           >
             <HardDrive className="w-3.5 h-3.5 text-indigo-600" />
-            <span>गूगल ड्राइव</span>
+            <span>{isHindi ? 'गूगल ड्राइव' : 'Google Drive'}</span>
           </button>
           <button
             onClick={onOpenReport}
@@ -105,7 +109,7 @@ export const Navbar: React.FC<Props> = ({ onOpenDonate, onOpenReport, onOpenAdmi
         </div>
 
         {/* Mobile menu trigger */}
-        <div className="flex sm:hidden items-center gap-2">
+        <div className="flex sm:hidden items-center gap-1.5">
           <button
             onClick={() => window.dispatchEvent(new CustomEvent('open-pwa-install-modal'))}
             className="p-2 bg-amber-400 text-[#8B0000] rounded-lg text-xs font-black flex items-center gap-1"
@@ -144,6 +148,50 @@ export const Navbar: React.FC<Props> = ({ onOpenDonate, onOpenReport, onOpenAdmi
             </div>
             <Download className="w-4 h-4" />
           </button>
+
+          {/* Prominent Mobile Staff Section (Top Priority) */}
+          <div className="p-3 bg-gradient-to-r from-amber-100 via-orange-100 to-yellow-100 rounded-2xl border-2 border-amber-400 space-y-2 shadow-sm">
+            <div className="text-xs font-black text-[#8B0000] uppercase tracking-wider flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-[#8B0000]" />
+                <span>स्टाफ पोर्टल (Staff Portal - 2 विकल्प)</span>
+              </span>
+              <span className="text-[10px] bg-red-800 text-white px-2 py-0.5 rounded-full font-mono">नया</span>
+            </div>
+            <div className="grid grid-cols-1 gap-2 pt-0.5">
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenStaff?.('registration');
+                }}
+                className="w-full text-left p-2.5 rounded-xl bg-white border border-amber-300 hover:bg-amber-50 flex items-center gap-3 text-xs font-bold text-gray-900 cursor-pointer shadow-xs transition-transform active:scale-98"
+              >
+                <div className="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <UserPlus className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-black text-gray-900">1. स्टाफ रजिस्ट्रेशन</div>
+                  <div className="text-[11px] text-gray-500 font-medium">नया ऑनबोर्डिंग फॉर्म भरें व आईडी पाएं</div>
+                </div>
+              </button>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenStaff?.('download');
+                }}
+                className="w-full text-left p-2.5 rounded-xl bg-white border border-indigo-300 hover:bg-indigo-50 flex items-center gap-3 text-xs font-bold text-gray-900 cursor-pointer shadow-xs transition-transform active:scale-98"
+              >
+                <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Award className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-black text-gray-900">2. स्टाफ आई-कार्ड डाउनलोड</div>
+                  <div className="text-[11px] text-gray-500 font-medium">स्टाइलिश कार्ड खोजें व डाउनलोड करें (हिन्दी/Eng)</div>
+                </div>
+              </button>
+            </div>
+          </div>
+
           <a
             href="#about"
             onClick={() => setMobileMenuOpen(false)}
@@ -263,7 +311,7 @@ export const Navbar: React.FC<Props> = ({ onOpenDonate, onOpenReport, onOpenAdmi
               className="w-full text-left py-2 px-3 bg-red-50 text-[#8B0000] rounded-xl font-bold flex items-center gap-2 border border-red-200 mt-2"
             >
               <Lock className="w-4 h-4" />
-              <span>एडमिन / सुपर एडमिन लॉगिन</span>
+              <span>{isHindi ? 'एडमिन / सुपर एडमिन लॉगिन' : 'Admin / Super Admin Login'}</span>
             </button>
           )}
         </div>

@@ -32,7 +32,7 @@ import { CertificateVerificationQR } from '../CertificateVerificationQR';
 import { amountToWordsIndian } from '../../utils/numberToWords';
 import { QRCodeSVG } from 'qrcode.react';
 import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
+import { exportElementAsPdf } from '../../utils/exportImage';
 import toast from 'react-hot-toast';
 import { SendCertificateModal, CertificateShareData } from '../SendCertificateModal';
 import { triggerDonationReceiptEmail } from '../../services/emailService';
@@ -97,29 +97,18 @@ export const Donation80GReceiptView: React.FC<Props> = ({
     const toastId = toast.loading('उच्च गुणवत्ता A4 दान रसीद PDF तैयार हो रही है...');
 
     try {
-      // Create high-res canvas
-      const canvas = await html2canvas(receiptRef.current, {
-        scale: 2.5,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#FFFFFF',
-        windowWidth: 800
-      });
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.98);
-      const pdf = new jsPDF({
+      const fileName = `Donation_Receipt_${receiptNumber.replace(/[\/\\]/g, '_')}_${donation.donorName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      const success = await exportElementAsPdf(receiptRef.current, fileName, {
         orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
+        pixelRatio: 2.5,
+        backgroundColor: '#FFFFFF'
       });
 
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
-      pdf.save(`Donation_Receipt_${receiptNumber.replace(/[\/\\]/g, '_')}_${donation.donorName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
-
-      toast.success('दान रसीद PDF सफलतापूर्वक डाउनलोड हो गई!', { id: toastId });
+      if (success) {
+        toast.success('दान रसीद PDF सफलतापूर्वक डाउनलोड हो गई!', { id: toastId });
+      } else {
+        throw new Error('PDF export returned false');
+      }
     } catch (err) {
       console.error('PDF Generation error:', err);
       toast.error('PDF बनाने में त्रुटि आई। कृपया प्रिंट विकल्प का प्रयोग करें।', { id: toastId });

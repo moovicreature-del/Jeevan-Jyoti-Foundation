@@ -50,6 +50,7 @@ import { OtpVerificationModal } from './components/OtpVerificationModal';
 import { DownloadCertificatesModal } from './components/DownloadCertificatesModal';
 import { QuickDonateOverlay } from './components/donation/QuickDonateOverlay';
 import { GoogleDriveHubModal } from './components/drive/GoogleDriveHubModal';
+import { StaffHubModal } from './components/staff/StaffHubModal';
 
 export function App() {
   const { isLoading: isFirestoreLoading } = useHomeContent();
@@ -71,12 +72,37 @@ export function App() {
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [showDownloadCertificatesModal, setShowDownloadCertificatesModal] = useState(false);
   const [showGoogleDriveModal, setShowGoogleDriveModal] = useState(false);
+  const [showStaffModal, setShowStaffModal] = useState(false);
+  const [staffModalTab, setStaffModalTab] = useState<'options' | 'registration' | 'download'>('options');
+  const [urlStaffId, setUrlStaffId] = useState<string | null>(null);
   const [activeFormTab, setActiveFormTab] = useState<'appreciation' | 'volunteer' | 'festival' | 'verification' | 'donation'>('appreciation');
 
   // Check URL params and boot background services on mount
   useEffect(() => {
     // Automated background service: Archive all issued certificates to Firestore 'public_verified_archive'
     initAutomatedPublicArchiveBackgroundSync().catch(() => {});
+
+    // Listen for Staff Modal Custom Events
+    const handleOpenStaffEvent = (e: any) => {
+      setStaffModalTab(e.detail?.tab || 'options');
+      if (e.detail?.staffId) {
+        setUrlStaffId(e.detail.staffId);
+      }
+      setShowStaffModal(true);
+    };
+    const handleOpenStaffReg = () => {
+      setStaffModalTab('registration');
+      setUrlStaffId(null);
+      setShowStaffModal(true);
+    };
+    const handleOpenStaffCard = () => {
+      setStaffModalTab('download');
+      setShowStaffModal(true);
+    };
+
+    window.addEventListener('open-staff-modal', handleOpenStaffEvent);
+    window.addEventListener('open-staff-registration', handleOpenStaffReg);
+    window.addEventListener('open-staff-id-card', handleOpenStaffCard);
 
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
@@ -89,7 +115,23 @@ export function App() {
       if (verifyParam) {
         setVerifyRouteId(verifyParam);
       }
+
+      const staffParam =
+        urlParams.get('downloadStaffCard') ||
+        urlParams.get('staffCard') ||
+        urlParams.get('staffId');
+      if (staffParam) {
+        setUrlStaffId(staffParam);
+        setStaffModalTab('download');
+        setShowStaffModal(true);
+      }
     }
+
+    return () => {
+      window.removeEventListener('open-staff-modal', handleOpenStaffEvent);
+      window.removeEventListener('open-staff-registration', handleOpenStaffReg);
+      window.removeEventListener('open-staff-id-card', handleOpenStaffCard);
+    };
   }, []);
 
   const handleDonationSuccess = (newDonation: DonationRecord) => {
@@ -138,6 +180,10 @@ export function App() {
         onOpenReport={() => setShowReportModal(true)}
         onOpenAdmin={() => setShowAdminLoginModal(true)}
         onOpenGoogleDrive={() => setShowGoogleDriveModal(true)}
+        onOpenStaff={(tab) => {
+          setStaffModalTab(tab || 'options');
+          setShowStaffModal(true);
+        }}
       />
 
       {/* Main Content Sections */}
@@ -146,6 +192,10 @@ export function App() {
           onOpenDonate={() => handleOpenFormTab('donation')}
           onOpenVolunteerPortal={() => handleOpenFormTab('volunteer')}
           onOpenAdmin={() => setShowAdminLoginModal(true)}
+          onOpenStaff={(tab) => {
+            setStaffModalTab(tab || 'options');
+            setShowStaffModal(true);
+          }}
         />
 
         {/* Action Hub Strip */}
@@ -161,6 +211,10 @@ export function App() {
           onOpenFestivalPortal={() => handleOpenFormTab('festival')}
           onOpenQrScanner={() => handleOpenFormTab('verification')}
           onOpenGoogleDrive={() => setShowGoogleDriveModal(true)}
+          onOpenStaff={(tab) => {
+            setStaffModalTab(tab || 'options');
+            setShowStaffModal(true);
+          }}
         />
 
         {/* Home Page Photo Slider Showcase (Automatic Smooth Slideshow) */}
@@ -208,6 +262,10 @@ export function App() {
           onOpenDonationCert={(donation) => setSelectedDonation(donation)}
           onOpenUpiDonate={() => setShowDonateModal(true)}
           onOpenVerifyModal={(certId) => setVerifyRouteId(certId)}
+          onOpenStaff={(tab) => {
+            setStaffModalTab(tab || 'options');
+            setShowStaffModal(true);
+          }}
         />
 
         {/* Festival Greetings & Registration Tab Portal */}
@@ -441,6 +499,18 @@ export function App() {
             <GoogleDriveHubModal
               isOpen={showGoogleDriveModal}
               onClose={() => setShowGoogleDriveModal(false)}
+            />
+          )}
+
+          {/* 14. Official Staff Portal (1. Staff Registration Form & 2. Staff I-Card Download) */}
+          {showStaffModal && (
+            <StaffHubModal
+              initialTab={staffModalTab}
+              initialStaffId={urlStaffId}
+              onClose={() => {
+                setShowStaffModal(false);
+                setUrlStaffId(null);
+              }}
             />
           )}
       </ErrorBoundary>

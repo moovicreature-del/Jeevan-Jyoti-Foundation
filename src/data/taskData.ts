@@ -141,8 +141,8 @@ export const INITIAL_TASKS: TaskRecord[] = [
   },
   {
     id: 'JJF-TSK-2026-05',
-    title: 'Women Skill & Self-Reliance Workshop Facilitator',
-    titleHindi: 'महिला स्वावलंबन कार्यशाला समन्वयक',
+    title: 'Women Skill & Empowerment Workshop Facilitator',
+    titleHindi: 'महिला सशक्तीकरण कार्यशाला समन्वयक',
     category: 'women',
     location: 'Saidpur Block Community Center',
     locationHindi: 'सैदपुर ब्लॉक सामुदायिक भवन',

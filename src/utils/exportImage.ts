@@ -97,27 +97,100 @@ function fallbackPrintWindow(element: HTMLElement): void {
 }
 
 /**
- * High-Resolution PNG Export (300 DPI)
+ * Helper to safely extract image dimensions from data URL or element
  */
-export async function exportElementAsPng(
+function getImageDimensions(
+  dataUrl: string,
   element: HTMLElement,
-  fileName: string,
-  options?: ExportOptions
-): Promise<boolean> {
-  const finalFileName = fileName.endsWith('.png') ? fileName : `${fileName}.png`;
+  scale: number
+): Promise<{ width: number; height: number }> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      resolve({
+        width: img.naturalWidth || (element.offsetWidth ? element.offsetWidth * scale : 1080),
+        height: img.naturalHeight || (element.offsetHeight ? element.offsetHeight * scale : 1710)
+      });
+    };
+    img.onerror = () => {
+      resolve({
+        width: element.offsetWidth ? element.offsetWidth * scale : 1080,
+        height: element.offsetHeight ? element.offsetHeight * scale : 1710
+      });
+    };
+    img.src = dataUrl;
+  });
+}
+
+/**
+ * Robust capture of any HTMLElement to high-resolution Image Data URL.
+ * Uses html-to-image as PRIMARY strategy because it renders via SVG foreignObject in the browser's
+ * native engine, which fully supports modern CSS features (like Tailwind v4's oklab/oklch colors).
+ * This completely prevents html2canvas's "Attempting to parse an unsupported color function 'oklab'" crash.
+ */
+export async function captureElementToImageData(
+  element: HTMLElement,
+  options?: {
+    format?: 'png' | 'jpeg';
+    quality?: number;
+    scale?: number;
+    backgroundColor?: string;
+  }
+): Promise<{ dataUrl: string; width: number; height: number } | null> {
+  const scale = options?.scale ?? 3;
+  const quality = options?.quality ?? 0.98;
+  const format = options?.format ?? 'jpeg';
   const bg = options?.backgroundColor ?? '#FFFFFF';
-  const scale = options?.pixelRatio ?? 3; // 300 DPI crisp rendering
+
   let cleanup: (() => void) | null = null;
 
-  // 1. Primary Strategy: html2canvas with asset force-resolution & CORS policy handling
+  // 1. Force resolve public image assets & ensure CORS accessibility
   try {
     cleanup = await forceResolvePublicAssets(element);
+  } catch (err) {
+    console.warn('Asset resolution warning:', err);
+  }
 
+  // 2. Primary Strategy: html-to-image (Native browser rendering, natively supports oklab/oklch)
+  try {
+    const config = {
+      quality: quality,
+      pixelRatio: scale,
+      backgroundColor: bg,
+      cacheBust: false,
+      skipFonts: true,
+      fontEmbedCSS: '',
+      filter: (node: Node) => {
+        if (node instanceof HTMLElement && (node.classList.contains('no-print') || node.classList.contains('no-export'))) {
+          return false;
+        }
+        return true;
+      }
+    };
+
+    const dataUrl = format === 'png' 
+      ? await toPng(element, config)
+      : await toJpeg(element, config);
+
+    const dims = await getImageDimensions(dataUrl, element, scale);
+    return {
+      dataUrl,
+      width: dims.width,
+      height: dims.height
+    };
+  } catch (h2iErr) {
+    console.warn('html-to-image capture warning, attempting html2canvas fallback:', h2iErr);
+  }
+
+  // 3. Secondary Strategy: html2canvas fallback
+  try {
     const canvas = await html2canvas(element, {
       scale: scale,
       backgroundColor: bg,
       useCORS: true,
-      allowTaint: true,
+      allowTaint: false,
+      scrollX: 0,
+      scrollY: 0,
       logging: false,
       ignoreElements: (node) => {
         if (node instanceof HTMLElement && (node.classList.contains('no-print') || node.classList.contains('no-export'))) {
@@ -127,48 +200,50 @@ export async function exportElementAsPng(
       }
     });
 
-    const dataUrl = canvas.toDataURL('image/png', options?.quality ?? 1.0);
-    const link = document.createElement('a');
-    link.download = finalFileName;
-    link.href = dataUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    return true;
+    const dataUrl = canvas.toDataURL(format === 'png' ? 'image/png' : 'image/jpeg', quality);
+    return {
+      dataUrl,
+      width: canvas.width,
+      height: canvas.height
+    };
   } catch (canvasErr) {
-    console.warn('html2canvas PNG export failed, trying html-to-image fallback:', canvasErr);
+    console.error('All image capture methods failed for element:', canvasErr);
+    return null;
   } finally {
     if (cleanup) cleanup();
   }
+}
 
-  // 2. Secondary Strategy: html-to-image
+/**
+ * High-Resolution PNG Export (300 DPI)
+ */
+export async function exportElementAsPng(
+  element: HTMLElement,
+  fileName: string,
+  options?: ExportOptions
+): Promise<boolean> {
+  const finalFileName = fileName.endsWith('.png') ? fileName : `${fileName}.png`;
+  const result = await captureElementToImageData(element, {
+    format: 'png',
+    quality: options?.quality ?? 1.0,
+    scale: options?.pixelRatio ?? 3,
+    backgroundColor: options?.backgroundColor ?? '#FFFFFF'
+  });
+
+  if (!result) return false;
+
   try {
-    const dataUrl = await toPng(element, {
-      quality: options?.quality ?? 1.0,
-      pixelRatio: scale,
-      backgroundColor: bg,
-      cacheBust: false,
-      skipFonts: false,
-      filter: (node) => {
-        if (node instanceof HTMLElement && (node.classList.contains('no-print') || node.classList.contains('no-export'))) {
-          return false;
-        }
-        return true;
-      }
-    });
-
     const link = document.createElement('a');
     link.download = finalFileName;
-    link.href = dataUrl;
+    link.href = result.dataUrl;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     return true;
-  } catch (htmlToImageErr) {
-    console.error('html-to-image fallback failed:', htmlToImageErr);
+  } catch (err) {
+    console.error('PNG download link trigger error:', err);
+    return false;
   }
-
-  return false;
 }
 
 /**
@@ -180,65 +255,25 @@ export async function exportElementAsJpg(
   options?: ExportOptions
 ): Promise<boolean> {
   const finalFileName = fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') ? fileName : `${fileName}.jpg`;
-  const scale = options?.pixelRatio ?? 3; // 300 DPI high resolution
-  const quality = options?.quality ?? 0.98;
-  let cleanup: (() => void) | null = null;
+  const result = await captureElementToImageData(element, {
+    format: 'jpeg',
+    quality: options?.quality ?? 0.98,
+    scale: options?.pixelRatio ?? 3,
+    backgroundColor: options?.backgroundColor ?? '#FFFFFF'
+  });
 
-  // 1. Primary Strategy: html2canvas with asset force-resolution & CORS policy handling
+  if (!result) return false;
+
   try {
-    cleanup = await forceResolvePublicAssets(element);
-
-    const canvas = await html2canvas(element, {
-      scale: scale,
-      backgroundColor: '#FFFFFF',
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      ignoreElements: (node) => {
-        if (node instanceof HTMLElement && (node.classList.contains('no-print') || node.classList.contains('no-export'))) {
-          return true;
-        }
-        return false;
-      }
-    });
-
-    const dataUrl = canvas.toDataURL('image/jpeg', quality);
     const link = document.createElement('a');
     link.download = finalFileName;
-    link.href = dataUrl;
+    link.href = result.dataUrl;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     return true;
   } catch (err) {
-    console.warn('html2canvas JPG export failed, trying fallback:', err);
-  } finally {
-    if (cleanup) cleanup();
-  }
-
-  // 2. Secondary Strategy: html-to-image toJpeg
-  try {
-    const dataUrl = await toJpeg(element, {
-      quality: quality,
-      pixelRatio: scale,
-      backgroundColor: '#FFFFFF',
-      filter: (node) => {
-        if (node instanceof HTMLElement && (node.classList.contains('no-print') || node.classList.contains('no-export'))) {
-          return false;
-        }
-        return true;
-      }
-    });
-
-    const link = document.createElement('a');
-    link.download = finalFileName;
-    link.href = dataUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    return true;
-  } catch (fallbackErr) {
-    console.error('JPG export fallback failed:', fallbackErr);
+    console.error('JPG download link trigger error:', err);
     return false;
   }
 }
@@ -252,28 +287,18 @@ export async function exportElementAsPdf(
   options?: ExportOptions
 ): Promise<boolean> {
   const finalFileName = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`;
-  let cleanup: (() => void) | null = null;
+  const result = await captureElementToImageData(element, {
+    format: 'jpeg',
+    quality: options?.quality ?? 0.98,
+    scale: options?.pixelRatio ?? 3,
+    backgroundColor: options?.backgroundColor ?? '#FFFFFF'
+  });
+
+  if (!result) return false;
 
   try {
-    cleanup = await forceResolvePublicAssets(element);
-
-    const canvas = await html2canvas(element, {
-      scale: 3, // 300 DPI high fidelity
-      backgroundColor: '#FFFFFF',
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      ignoreElements: (node) => {
-        if (node instanceof HTMLElement && (node.classList.contains('no-print') || node.classList.contains('no-export'))) {
-          return true;
-        }
-        return false;
-      }
-    });
-
-    const imgData = canvas.toDataURL('image/jpeg', 0.98);
-    const elemWidth = canvas.width;
-    const elemHeight = canvas.height;
+    const elemWidth = result.width;
+    const elemHeight = result.height;
     
     // Auto-detect orientation if not forced
     const isPortrait = elemHeight > elemWidth;
@@ -281,7 +306,7 @@ export async function exportElementAsPdf(
       ? options.orientation
       : isPortrait ? 'portrait' : 'landscape';
 
-    // Create A4 PDF (297mm x 210mm for Landscape, 210mm x 297mm for Portrait)
+    // Create A4 PDF
     const pdf = new jsPDF({
       orientation: orientation,
       unit: 'mm',
@@ -294,8 +319,8 @@ export async function exportElementAsPdf(
     // Preserve exact aspect ratio with crisp margins
     const elemAspect = elemWidth / elemHeight;
 
-    // Small margin for clean printing (3mm)
-    const margin = 3;
+    // Margin for clean printing (4mm)
+    const margin = 4;
     const usableWidth = pageWidth - (margin * 2);
     const usableHeight = pageHeight - (margin * 2);
 
@@ -311,14 +336,93 @@ export async function exportElementAsPdf(
       offsetY = margin;
     }
 
-    pdf.addImage(imgData, 'JPEG', offsetX, offsetY, renderWidth, renderHeight, undefined, 'FAST');
+    pdf.addImage(result.dataUrl, 'JPEG', offsetX, offsetY, renderWidth, renderHeight, undefined, 'FAST');
     pdf.save(finalFileName);
     return true;
   } catch (err) {
     console.error('PDF export failed:', err);
     return false;
-  } finally {
-    if (cleanup) cleanup();
+  }
+}
+
+/**
+ * High-Resolution Multi-Page PDF Export (e.g. Page 1: Front Side, Page 2: Back Side)
+ */
+export async function exportElementsAsMultiPagePdf(
+  elements: (HTMLElement | null)[],
+  fileName: string,
+  options?: ExportOptions
+): Promise<boolean> {
+  const validElements = elements.filter((el): el is HTMLElement => el !== null);
+  if (validElements.length === 0) return false;
+
+  const finalFileName = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`;
+
+  try {
+    let pdf: jsPDF | null = null;
+
+    for (let i = 0; i < validElements.length; i++) {
+      const element = validElements[i];
+      const result = await captureElementToImageData(element, {
+        format: 'jpeg',
+        quality: options?.quality ?? 0.98,
+        scale: options?.pixelRatio ?? 3,
+        backgroundColor: options?.backgroundColor ?? '#FFFFFF'
+      });
+
+      if (!result) continue;
+
+      const elemWidth = result.width;
+      const elemHeight = result.height;
+      const isPortrait = elemHeight > elemWidth;
+      const orientation = options?.orientation && options.orientation !== 'auto'
+        ? options.orientation
+        : isPortrait ? 'portrait' : 'landscape';
+
+      if (i === 0) {
+        pdf = new jsPDF({
+          orientation: orientation,
+          unit: 'mm',
+          format: 'a4'
+        });
+      } else if (pdf) {
+        pdf.addPage('a4', orientation);
+      }
+
+      if (!pdf) continue;
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const elemAspect = elemWidth / elemHeight;
+
+      // Clean printing margin (6mm)
+      const margin = 6;
+      const usableWidth = pageWidth - (margin * 2);
+      const usableHeight = pageHeight - (margin * 2);
+
+      let renderWidth = usableWidth;
+      let renderHeight = usableWidth / elemAspect;
+      let offsetX = margin;
+      let offsetY = margin + ((usableHeight - renderHeight) / 2);
+
+      if (renderHeight > usableHeight) {
+        renderHeight = usableHeight;
+        renderWidth = usableHeight * elemAspect;
+        offsetX = margin + ((usableWidth - renderWidth) / 2);
+        offsetY = margin;
+      }
+
+      pdf.addImage(result.dataUrl, 'JPEG', offsetX, offsetY, renderWidth, renderHeight, undefined, 'FAST');
+    }
+
+    if (pdf) {
+      pdf.save(finalFileName);
+      return true;
+    }
+    return false;
+  } catch (err) {
+    console.error('Multi-page PDF export failed:', err);
+    return false;
   }
 }
 

@@ -585,7 +585,7 @@ export const FESTIVALS_BASE_DEFINITIONS: Omit<FestivalItem, 'dateFormattedHindi'
     monthEnglish: 'October',
     hinduMonthHindi: 'आश्विन मास',
     hinduMonthEnglish: 'Ashvina Maas',
-    tithiHindi: '02 अक्टूबर • सत्य, अहिंसा, सादगी व स्वावलंबन दिवस',
+    tithiHindi: '02 अक्टूबर • सत्य, अहिंसा, सादगी व राष्ट्रसेवा दिवस',
     tithiEnglish: '2nd October • National Day',
     paksha: 'solar',
     category: 'national',
@@ -600,7 +600,7 @@ export const FESTIVALS_BASE_DEFINITIONS: Omit<FestivalItem, 'dateFormattedHindi'
     },
     shloka: 'अहिंसा परमो धर्मः धर्महिंसा तथैव च। सत्यमेव जयते नानृतम्॥',
     blessingHindi: 'राष्ट्रपिता महात्मा गांधी एवं पूर्व प्रधानमंत्री लाल बहादुर शास्त्री जी की जयंती पर शत-शत नमन। सत्य, अहिंसा, स्वच्छता, जय जवान-जय किसान के आदर्शों को जीवन में अपनाएं।',
-    blessingEnglish: 'Remembering the apostles of Truth, Non-Violence, Simplicity, and Self-Reliance on Gandhi & Shastri Jayanti. Let us serve humanity with pure integrity.',
+    blessingEnglish: 'Remembering the apostles of Truth, Non-Violence, Simplicity, and Dedicated Service on Gandhi & Shastri Jayanti. Let us serve humanity with pure integrity.',
     defaultDedications: [
       'सत्य और अहिंसा के मार्ग पर चलकर समाज में बदलाव लाने का संकल्प लें।',
       'स्वच्छता, सादगी और कर्तव्यनिष्ठा ही राष्ट्रपिता के प्रति सच्ची श्रद्धांजलि है।'
