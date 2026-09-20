@@ -30,7 +30,12 @@ import {
   Clock,
   Printer,
   Info,
-  X
+  X,
+  ThumbsUp,
+  ThumbsDown,
+  Trash2,
+  Share2,
+  AlertCircle
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -56,7 +61,11 @@ import {
   fetchServerCertificateStats,
   syncCertificatesFromFirestore,
   getAllRegisteredCertificates,
-  parseDateComponents
+  parseDateComponents,
+  approveCertificateInRegistry,
+  rejectCertificateInRegistry,
+  deleteCertificateFromRegistry,
+  getCertificateApprovalWhatsAppUrl
 } from '../../services/certificateRegistryService';
 import toast from 'react-hot-toast';
 
@@ -77,10 +86,12 @@ export const TabCertificatePipelineDashboard: React.FC<TabCertificatePipelineDas
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedApprovalStatus, setSelectedApprovalStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [viewMode, setViewMode] = useState<'overview' | 'monthly_trends' | 'pipeline_funnel' | 'registry_table'>('overview');
   const [selectedCertDetail, setSelectedCertDetail] = useState<RegisteredCertificateItem | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [actionProcessingId, setActionProcessingId] = useState<string | null>(null);
 
   // Month options with bilingual labels
   const monthOptions = [
@@ -167,6 +178,14 @@ export const TabCertificatePipelineDashboard: React.FC<TabCertificatePipelineDas
         return false;
       }
 
+      // 4b. Approval Status Filter
+      if (selectedApprovalStatus !== 'all') {
+        const certAppr = cert.type === 'festival_greeting' ? 'approved' : (cert.approvalStatus || 'pending');
+        if (certAppr !== selectedApprovalStatus) {
+          return false;
+        }
+      }
+
       // 5. Search Query
       if (searchTerm.trim()) {
         const query = searchTerm.trim().toLowerCase();
@@ -180,7 +199,79 @@ export const TabCertificatePipelineDashboard: React.FC<TabCertificatePipelineDas
 
       return true;
     });
-  }, [stats, selectedYear, selectedMonth, selectedCategory, selectedStatus, searchTerm]);
+  }, [stats, selectedYear, selectedMonth, selectedCategory, selectedStatus, selectedApprovalStatus, searchTerm]);
+
+  // Admin Approval Action: Approve certificate & trigger WhatsApp message to registered number
+  const handleApproveCertificate = async (cert: RegisteredCertificateItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setActionProcessingId(cert.id);
+    try {
+      const updated = approveCertificateInRegistry(cert.id, adminProfile?.name || 'Super Admin');
+      if (updated) {
+        toast.success(`प्रमाण पत्र ${cert.id} स्वीकृत (Approved) किया गया!`);
+        // Trigger WhatsApp notification to registered mobile with download link
+        const whatsappUrl = getCertificateApprovalWhatsAppUrl(updated);
+        window.open(whatsappUrl, '_blank');
+        toast.success(`पंजीकृत मोबाइल (+91 ${cert.phone}) पर WhatsApp संदेश लिंक तैयार!`);
+        await loadAnalyticsData(false);
+        if (selectedCertDetail && selectedCertDetail.id === cert.id) {
+          setSelectedCertDetail(updated);
+        }
+      } else {
+        toast.error('स्वीकृति प्रक्रिया में त्रुटि आई।');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'त्रुटि हुई');
+    } finally {
+      setActionProcessingId(null);
+    }
+  };
+
+  // Admin Rejection Action: Reject certificate with prompt for reason
+  const handleRejectCertificate = async (cert: RegisteredCertificateItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const reason = window.prompt(`प्रमाण पत्र (${cert.id}) अस्वीकार करने का कारण दर्ज करें:`, 'दस्तावेज़/विवरण अपूर्ण होने के कारण अस्वीकृत');
+    if (reason === null) return; // User cancelled
+
+    setActionProcessingId(cert.id);
+    try {
+      const updated = rejectCertificateInRegistry(cert.id, reason.trim() || 'दस्तावेज़/विवरण अपूर्ण होने के कारण अस्वीकृत');
+      if (updated) {
+        toast.error(`प्रमाण पत्र ${cert.id} अस्वीकृत (Rejected) कर दिया गया।`);
+        await loadAnalyticsData(false);
+        if (selectedCertDetail && selectedCertDetail.id === cert.id) {
+          setSelectedCertDetail(updated);
+        }
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'त्रुटि हुई');
+    } finally {
+      setActionProcessingId(null);
+    }
+  };
+
+  // Admin Deletion Action: Permanently delete certificate
+  const handleDeleteCertificate = async (cert: RegisteredCertificateItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const confirmed = window.confirm(`क्या आप निश्चित रूप से प्रमाण पत्र ${cert.id} (${cert.recipientName}) को डेटाबेस से स्थायी रूप से हटाना (Delete) चाहते हैं?`);
+    if (!confirmed) return;
+
+    setActionProcessingId(cert.id);
+    try {
+      const ok = await deleteCertificateFromRegistry(cert.id);
+      if (ok) {
+        toast.success(`प्रमाण पत्र ${cert.id} सफलतापूर्वक डिलीट कर दिया गया।`);
+        await loadAnalyticsData(false);
+        if (selectedCertDetail && selectedCertDetail.id === cert.id) {
+          setSelectedCertDetail(null);
+        }
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'हटाने में त्रुटि');
+    } finally {
+      setActionProcessingId(null);
+    }
+  };
 
   // Copy Certificate ID
   const handleCopyId = (id: string, e: React.MouseEvent) => {

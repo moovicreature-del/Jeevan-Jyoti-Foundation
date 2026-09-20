@@ -29,6 +29,24 @@ export function getAllStaffMembers(): StaffMember[] {
       localStorage.setItem(STAFF_STORAGE_KEY, JSON.stringify(INITIAL_STAFF_MEMBERS));
       return INITIAL_STAFF_MEMBERS;
     }
+    // Cleanse any old cached occurrences of 9452361666 from stored staff
+    let changed = false;
+    const sanitized = parsed.map((item) => {
+      let mod = { ...item };
+      if (mod.mobile === '9452361666') {
+        mod.mobile = '9838361666';
+        changed = true;
+      }
+      if (mod.emergencyContact === '9452361666') {
+        mod.emergencyContact = '8052361666';
+        changed = true;
+      }
+      return mod;
+    });
+    if (changed) {
+      localStorage.setItem(STAFF_STORAGE_KEY, JSON.stringify(sanitized));
+      return sanitized;
+    }
     return parsed;
   } catch (err) {
     console.warn('Error reading staff registry from storage:', err);

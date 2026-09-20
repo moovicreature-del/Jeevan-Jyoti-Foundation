@@ -23,7 +23,7 @@ import {
   Download,
   Sparkles
 } from 'lucide-react';
-import { StaffMember } from '../../types/staff';
+import { StaffMember, StaffRelationType } from '../../types/staff';
 import { registerNewStaffMember } from '../../services/staffService';
 import confetti from 'canvas-confetti';
 
@@ -75,7 +75,7 @@ export const StaffRegistrationModal: React.FC<StaffRegistrationModalProps> = ({
   // Form Fields State
   const [fullName, setFullName] = useState('');
   const [fatherOrHusbandName, setFatherOrHusbandName] = useState('');
-  const [relationType, setRelationType] = useState<'Father' | 'Husband'>('Father');
+  const [relationType, setRelationType] = useState<StaffRelationType>('So');
   const [selectedDesignation, setSelectedDesignation] = useState(PRESET_DESIGNATIONS[0]);
   const [customDesignation, setCustomDesignation] = useState('');
   const [department, setDepartment] = useState(PRESET_DEPARTMENTS[0]);
@@ -400,41 +400,100 @@ export const StaffRegistrationModal: React.FC<StaffRegistrationModalProps> = ({
                 />
               </div>
 
-              {/* Father / Husband Name & Relation */}
+              {/* Father / Husband / Guardian Name & Relation Prefix */}
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-xs font-bold text-gray-700">
-                    {relationType === 'Husband' ? 'पति का नाम' : 'पिता का नाम'} (Father/Husband Name) *
+                    संबंधी / अभिभावक का नाम (Father / Husband / Guardian) *
                   </label>
-                  <div className="flex text-[10px] bg-gray-100 rounded-lg p-0.5 border border-gray-200">
-                    <button
-                      type="button"
-                      onClick={() => setRelationType('Father')}
-                      className={`px-1.5 py-0.5 rounded-md font-bold cursor-pointer transition-colors ${
-                        relationType === 'Father' ? 'bg-[#8B0000] text-white' : 'text-gray-600'
-                      }`}
-                    >
-                      पिता (Father)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRelationType('Husband')}
-                      className={`px-1.5 py-0.5 rounded-md font-bold cursor-pointer transition-colors ${
-                        relationType === 'Husband' ? 'bg-[#8B0000] text-white' : 'text-gray-600'
-                      }`}
-                    >
-                      पति (Husband)
-                    </button>
-                  </div>
+                  <span className="text-[10px] text-[#8B0000] font-bold">
+                    {relationType === 'So' && 'सुपुत्र (Son of)'}
+                    {relationType === 'Do' && 'सुपुत्री (Daughter of)'}
+                    {relationType === 'Wo' && 'पत्नी (Wife of)'}
+                    {relationType === 'Husband' && 'पति (Husband)'}
+                    {relationType === 'Father' && 'पिता (Father)'}
+                  </span>
                 </div>
-                <input
-                  type="text"
-                  required
-                  value={fatherOrHusbandName}
-                  onChange={(e) => setFatherOrHusbandName(e.target.value)}
-                  placeholder="उदा. श्री शिवपूजन राय"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#8B0000] focus:border-transparent outline-hidden"
-                />
+
+                {/* Relationship Prefix Selector Buttons */}
+                <div className="grid grid-cols-4 gap-1 mb-1.5 p-1 bg-gray-100 rounded-xl border border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setRelationType('So')}
+                    className={`py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer text-center ${
+                      relationType === 'So' || relationType === 'Father'
+                        ? 'bg-[#8B0000] text-white shadow-xs'
+                        : 'text-gray-700 hover:bg-gray-200'
+                    }`}
+                    title="S/o (सुपुत्र)"
+                  >
+                    S/o (सुपुत्र)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRelationType('Do')}
+                    className={`py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer text-center ${
+                      relationType === 'Do'
+                        ? 'bg-[#8B0000] text-white shadow-xs'
+                        : 'text-gray-700 hover:bg-gray-200'
+                    }`}
+                    title="D/o (सुपुत्री)"
+                  >
+                    D/o (सुपुत्री)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRelationType('Wo')}
+                    className={`py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer text-center ${
+                      relationType === 'Wo' || relationType === 'Husband'
+                        ? 'bg-[#8B0000] text-white shadow-xs'
+                        : 'text-gray-700 hover:bg-gray-200'
+                    }`}
+                    title="W/o (पत्नी / पति का नाम)"
+                  >
+                    W/o (पत्नी)
+                  </button>
+                  <select
+                    value={relationType}
+                    onChange={(e) => setRelationType(e.target.value as StaffRelationType)}
+                    className="py-1 px-1 text-[10.5px] font-bold rounded-lg bg-white border border-gray-300 text-gray-700 cursor-pointer outline-hidden"
+                  >
+                    <option value="So">S/o (सुपुत्र)</option>
+                    <option value="Do">D/o (सुपुत्री)</option>
+                    <option value="Wo">W/o (पत्नी)</option>
+                    <option value="Father">पिता (Father)</option>
+                    <option value="Husband">पति (Husband)</option>
+                  </select>
+                </div>
+
+                {/* Input with prefix badge */}
+                <div className="relative flex items-center">
+                  <span className="absolute left-2.5 px-1.5 py-0.5 rounded-md bg-amber-100 text-[#8B0000] text-xs font-black border border-amber-300 pointer-events-none select-none font-mono">
+                    {relationType === 'So'
+                      ? 'S/o'
+                      : relationType === 'Do'
+                      ? 'D/o'
+                      : relationType === 'Wo'
+                      ? 'W/o'
+                      : relationType === 'Husband'
+                      ? 'W/o'
+                      : 'S/o'}
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    value={fatherOrHusbandName}
+                    onChange={(e) => setFatherOrHusbandName(e.target.value)}
+                    placeholder={
+                      relationType === 'Do'
+                        ? 'उदा. श्री शिवपूजन राय (पिता का नाम)'
+                        : relationType === 'Wo' || relationType === 'Husband'
+                        ? 'उदा. श्री सतीश चन्द्र वर्मा (पति का नाम)'
+                        : 'उदा. श्री शिवपूजन राय (पिता का नाम)'
+                    }
+                    className="w-full pl-15 pr-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#8B0000] focus:border-transparent outline-hidden"
+                  />
+                </div>
               </div>
             </div>
 
@@ -520,7 +579,7 @@ export const StaffRegistrationModal: React.FC<StaffRegistrationModalProps> = ({
                     maxLength={10}
                     value={emergencyContact}
                     onChange={(e) => setEmergencyContact(e.target.value.replace(/[^0-9]/g, ''))}
-                    placeholder="9452361666"
+                    placeholder="8052361666"
                     className="w-full pl-11 pr-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#8B0000] focus:border-transparent outline-hidden font-mono"
                   />
                 </div>

@@ -2,7 +2,7 @@ import { Volunteer, DonationRecord, TaskRecord, FestivalGreetingRecord } from '.
 import { INITIAL_VOLUNTEERS, INITIAL_TASKS } from '../data/taskData';
 import { DONORS_DATA } from '../data/donorsData';
 import { db, isMockFirebase } from '../lib/firebase';
-import { collection, doc, getDocs, setDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, setDoc, deleteDoc } from 'firebase/firestore';
 import { archiveCertificateToPublicArchive } from './publicVerifiedArchiveService';
 
 export type CertificateCategoryType =
@@ -11,6 +11,8 @@ export type CertificateCategoryType =
   | 'donation_80g'
   | 'task_appreciation'
   | 'festival_greeting';
+
+export type CertificateApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 export interface RegisteredCertificateItem {
   id: string;
@@ -26,6 +28,11 @@ export interface RegisteredCertificateItem {
   amount?: number;
   details?: string;
   status: 'active' | 'verified' | 'certified';
+  approvalStatus?: CertificateApprovalStatus;
+  approvedAt?: string;
+  approvedBy?: string;
+  rejectionReason?: string;
+  rejectedAt?: string;
   rawVolunteer?: Volunteer;
   rawDonation?: DonationRecord;
   rawTask?: TaskRecord;
@@ -199,16 +206,31 @@ export function saveCertificateToRegistry(item: RegisteredCertificateItem): void
   const cleanPhone = normalizePhoneNumber(item.phone) || '8052361666';
   const timestamp = new Date().toISOString();
   
+  // Existing record check
+  const existingIdx = current.findIndex((c) => 
+    normalizeCertificateId(c.id) === normalizeCertificateId(item.id)
+  );
+
+  // Festival greeting cards are exempt from admin approval requirement
+  const isFestival = item.type === 'festival_greeting';
+  
+  // If approvalStatus is already provided, keep it. Otherwise:
+  // Festival cards default to 'approved'; other certificates default to 'pending'
+  const initialApprovalStatus: CertificateApprovalStatus =
+    item.approvalStatus || (isFestival ? 'approved' : 'pending');
+
   const normalizedItem: RegisteredCertificateItem = {
     ...item,
     phone: cleanPhone,
+    approvalStatus: existingIdx >= 0 && current[existingIdx].approvalStatus
+      ? (item.approvalStatus || current[existingIdx].approvalStatus)
+      : initialApprovalStatus,
+    approvedAt: (item.approvalStatus === 'approved' || (isFestival && !item.approvalStatus))
+      ? (item.approvedAt || (existingIdx >= 0 ? current[existingIdx].approvedAt : timestamp))
+      : item.approvedAt,
     updatedAt: timestamp,
-    createdAt: item.createdAt || timestamp
+    createdAt: item.createdAt || (existingIdx >= 0 ? current[existingIdx].createdAt : timestamp)
   };
-
-  const existingIdx = current.findIndex((c) => 
-    normalizeCertificateId(c.id) === normalizeCertificateId(normalizedItem.id)
-  );
 
   if (existingIdx >= 0) {
     current[existingIdx] = { ...current[existingIdx], ...normalizedItem };
@@ -236,6 +258,147 @@ export function saveCertificateToRegistry(item: RegisteredCertificateItem): void
   archiveCertificateToPublicArchive(normalizedItem).catch((err) => {
     console.debug('Background Public Verified Archive sync note:', err);
   });
+}
+
+/**
+ * Super Admin Approval: Approves a certificate in registry & Firestore
+ */
+export function approveCertificateInRegistry(certId: string, approvedBy: string = 'Super Admin'): RegisteredCertificateItem | null {
+  const current = getAllRegisteredCertificates();
+  const normId = normalizeCertificateId(certId);
+  const idx = current.findIndex((c) => normalizeCertificateId(c.id) === normId);
+  if (idx < 0) return null;
+
+  const timestamp = new Date().toISOString();
+  const updated: RegisteredCertificateItem = {
+    ...current[idx],
+    approvalStatus: 'approved',
+    approvedAt: timestamp,
+    approvedBy: approvedBy,
+    rejectionReason: undefined,
+    rejectedAt: undefined,
+    updatedAt: timestamp
+  };
+
+  current[idx] = updated;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+  } catch (e) {
+    console.warn('Failed to update local storage for approval:', e);
+  }
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('jjf_certificate_saved', { detail: updated }));
+  }
+
+  saveCertificateToFirestore(updated).catch((err) => {
+    console.debug('Background Firestore approval note:', err);
+  });
+
+  return updated;
+}
+
+/**
+ * Super Admin Rejection: Rejects a certificate with optional reason
+ */
+export function rejectCertificateInRegistry(certId: string, reason?: string): RegisteredCertificateItem | null {
+  const current = getAllRegisteredCertificates();
+  const normId = normalizeCertificateId(certId);
+  const idx = current.findIndex((c) => normalizeCertificateId(c.id) === normId);
+  if (idx < 0) return null;
+
+  const timestamp = new Date().toISOString();
+  const updated: RegisteredCertificateItem = {
+    ...current[idx],
+    approvalStatus: 'rejected',
+    rejectionReason: reason || 'दस्तावेज़/विवरण अपूर्ण होने के कारण अस्वीकृत',
+    rejectedAt: timestamp,
+    updatedAt: timestamp
+  };
+
+  current[idx] = updated;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+  } catch (e) {
+    console.warn('Failed to update local storage for rejection:', e);
+  }
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('jjf_certificate_saved', { detail: updated }));
+  }
+
+  saveCertificateToFirestore(updated).catch((err) => {
+    console.debug('Background Firestore rejection note:', err);
+  });
+
+  return updated;
+}
+
+/**
+ * Super Admin Deletion: Permanently deletes certificate from local registry & Firestore
+ */
+export async function deleteCertificateFromRegistry(certId: string): Promise<boolean> {
+  const current = getAllRegisteredCertificates();
+  const normId = normalizeCertificateId(certId);
+  const filtered = current.filter((c) => normalizeCertificateId(c.id) !== normId);
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+  } catch (e) {
+    console.warn('Failed to delete from local registry:', e);
+  }
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('jjf_certificate_saved', { detail: { id: certId, deleted: true } }));
+  }
+
+  try {
+    if (db && !isMockFirebase) {
+      const safeDocId = certId.replace(/[\/\s#?&]/g, '_');
+      const docRef = doc(db, FIRESTORE_COLLECTION, safeDocId);
+      await deleteDoc(docRef);
+    }
+  } catch (err) {
+    console.debug('Firestore deletion note:', err);
+  }
+
+  return true;
+}
+
+/**
+ * Construct public direct download/verification link for certificate
+ */
+export function getCertificateDownloadUrl(certId: string, phone?: string): string {
+  const baseUrl = typeof window !== 'undefined' && window.location.origin
+    ? window.location.origin
+    : 'https://jeevanjyotifoundation.org';
+  const cleanPhone = phone ? normalizePhoneNumber(phone) : '';
+  const phoneParam = cleanPhone ? `&phone=${encodeURIComponent(cleanPhone)}` : '';
+  return `${baseUrl}/?downloadCert=${encodeURIComponent(certId)}${phoneParam}`;
+}
+
+/**
+ * Generate WhatsApp approval notification URL with download link
+ */
+export function getCertificateApprovalWhatsAppUrl(cert: RegisteredCertificateItem): string {
+  const cleanPhone = normalizePhoneNumber(cert.phone) || '8052361666';
+  const downloadUrl = getCertificateDownloadUrl(cert.id, cleanPhone);
+
+  const message = `*जीवन ज्योति फाउंडेशन (रजि. ग़ाज़ीपुर, उत्तर प्रदेश, भारत)*\n` +
+    `आधिकारिक सूचना: *प्रमाण पत्र स्वीकृति (Approval Successful)*\n\n` +
+    `नमस्ते *${cert.recipientName}* जी,\n` +
+    `हर्ष के साथ सूचित किया जाता है कि जीवन ज्योति फाउंडेशन द्वारा आपका प्रमाण पत्र स्वीकृत (Approved) कर दिया गया है।\n\n` +
+    `📜 *दस्तावेज़:* ${cert.titleHindi}\n` +
+    `🆔 *प्रमाण पत्र संख्या:* ${cert.id}\n` +
+    `📅 *स्वीकृति दिनांक:* ${cert.approvedAt ? cert.approvedAt.split('T')[0] : cert.issueDate}\n` +
+    `📱 *पंजीकृत मोबाइल:* +91 ${cleanPhone}\n\n` +
+    `📥 *सीधा प्रमाण पत्र डाउनलोड लिंक:*\n` +
+    `${downloadUrl}\n\n` +
+    `नोट: आप सीधे वेबसाइट पर जाकर भी अपने पंजीकृत नंबर (+91 ${cleanPhone}) पर OTP सत्यापन करके इसे कभी भी डाउनलोड व प्रिंट कर सकते हैं।\n\n` +
+    `✨ हेल्पलाइन: (+91) 8052361666\n` +
+    `🌐 अधिकृत पोर्टल: jeevanjyotifoundation.org`;
+
+  return `https://api.whatsapp.com/send?phone=91${cleanPhone}&text=${encodeURIComponent(message)}`;
 }
 
 /**

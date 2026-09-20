@@ -37,7 +37,7 @@ import {
   History,
   Activity
 } from 'lucide-react';
-import { StaffMember, StaffStatus, StaffCardTheme, StaffCardLanguage } from '../../types/staff';
+import { StaffMember, StaffStatus, StaffCardTheme, StaffCardLanguage, formatRelationLabel } from '../../types/staff';
 import {
   getAllStaffMembers,
   approveStaffMember,
@@ -609,7 +609,7 @@ export const TabStaffApprovalManager: React.FC = () => {
                               </div>
                             )}
                             <div className="text-[10px] text-slate-400 mt-0.5">
-                              {staff.relationType === 'Husband' ? 'पति' : 'पिता'}: {staff.fatherOrHusbandName}
+                              {formatRelationLabel(staff.relationType, staff.fatherOrHusbandName, 'hi')}
                             </div>
                           </div>
                         </div>
@@ -1012,11 +1012,12 @@ export const TabStaffApprovalManager: React.FC = () => {
                         <span className="text-slate-600 font-medium">{staff.department}</span>
                       </div>
 
-                      {/* Father / Husband & ID */}
+                      {/* Father / Husband / Guardian & ID */}
                       <div className="text-[11px] text-slate-500 flex items-center gap-3 flex-wrap">
                         <span>
-                          {staff.relationType === 'Husband' ? 'पति' : 'पिता'}:{' '}
-                          <strong className="text-slate-700">{staff.fatherOrHusbandName}</strong>
+                          <strong className="text-slate-700">
+                            {formatRelationLabel(staff.relationType, staff.fatherOrHusbandName, 'hi')}
+                          </strong>
                         </span>
                         <span>•</span>
                         <span>

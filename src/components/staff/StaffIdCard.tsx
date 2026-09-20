@@ -5,7 +5,7 @@
 // ============================================================================
 
 import React from 'react';
-import { StaffMember, StaffCardTheme, StaffCardLanguage } from '../../types/staff';
+import { StaffMember, StaffCardTheme, StaffCardLanguage, formatRelationLabel } from '../../types/staff';
 import { FOUNDATION_INFO } from '../../data/foundationData';
 import { CertificateVerificationQR } from '../CertificateVerificationQR';
 import { ShaileshPradhanSignature, NgoRoundSeal } from '../DigitalSignature';
@@ -230,10 +230,10 @@ export const StaffIdCard: React.FC<StaffIdCardProps> = ({
           </div>
 
           {/* Registered Head Office & Official Contacts */}
-          <div className="bg-white rounded-xl p-2 border border-gray-200 shadow-2xs text-[9px] space-y-1">
+          <div className="bg-white rounded-xl p-2 border border-gray-200 shadow-2xs text-[9px] space-y-1.5">
             <div className="flex items-start gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-[#8B0000] shrink-0 mt-0.5" />
-              <div>
+              <div className="flex-1">
                 <div className="text-[8px] font-bold text-gray-500 uppercase">
                   {language === 'en' ? 'Registered Head Office Address:' : 'पंजीकृत केंद्रीय कार्यालय का पता:'}
                 </div>
@@ -248,7 +248,7 @@ export const StaffIdCard: React.FC<StaffIdCardProps> = ({
             <div className="grid grid-cols-2 gap-1.5 pt-1 border-t border-gray-100 text-[8.5px]">
               <div className="flex items-center gap-1 text-gray-700">
                 <Phone className="w-3 h-3 text-emerald-600 shrink-0" />
-                <span>+91-8052361666, 9452361666</span>
+                <span className="font-mono font-bold">+91-8052361666</span>
               </div>
               <div className="flex items-center gap-1 text-gray-700 font-mono font-bold">
                 <span>📌 DIGIPIN: 2J6T226CL2</span>
@@ -376,7 +376,7 @@ export const StaffIdCard: React.FC<StaffIdCardProps> = ({
                 <h1 className="font-black text-[14px] leading-tight text-white tracking-tight font-['Cinzel',serif] drop-shadow-xs">
                   JEEVAN JYOTI FOUNDATION
                 </h1>
-                <div className="text-[10px] font-extrabold text-amber-300 leading-none mt-0.5 text-center">
+                <div className="text-[9.5px] font-extrabold text-amber-300 leading-none mt-0.5 text-center">
                   Ghazipur, Uttar Pradesh (India)
                 </div>
               </>
@@ -385,7 +385,7 @@ export const StaffIdCard: React.FC<StaffIdCardProps> = ({
                 <h1 className="font-black text-[14px] leading-tight text-white tracking-tight drop-shadow-xs">
                   जीवन ज्योति फाउंडेशन
                 </h1>
-                <div className="text-[10.5px] font-extrabold text-amber-300 leading-none mt-0.5 text-center">
+                <div className="text-[10px] font-extrabold text-amber-300 leading-none mt-0.5 text-center">
                   मीरानपुर, मोहम्मदाबाद, गाजीपुर (उ.प्र.)
                 </div>
               </>
@@ -394,11 +394,19 @@ export const StaffIdCard: React.FC<StaffIdCardProps> = ({
                 <h1 className="font-black text-[13.5px] leading-tight text-white tracking-tight font-['Cinzel',serif] drop-shadow-xs">
                   JEEVAN JYOTI FOUNDATION
                 </h1>
-                <div className="text-[11px] font-extrabold text-amber-300 leading-none mt-0.5 text-center">
+                <div className="text-[10.5px] font-extrabold text-amber-300 leading-none mt-0.5 text-center">
                   जीवन ज्योति फाउंडेशन ग़ाज़ीपुर
                 </div>
               </>
             )}
+
+            {/* Official Royal NGO Contact Pill below Name & Address */}
+            <div className="mt-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/60 backdrop-blur-xs text-amber-200 shadow-2xs">
+              <Phone className="w-2.5 h-2.5 text-amber-300 shrink-0" />
+              <span className="text-[9px] font-black font-mono tracking-wider text-amber-100">
+                (+91) 8052361666
+              </span>
+            </div>
           </div>
         </div>
 
@@ -469,9 +477,7 @@ export const StaffIdCard: React.FC<StaffIdCardProps> = ({
               {staff.fullName}
             </h2>
             <div className="text-[11px] font-medium text-gray-600 truncate mt-0.5">
-              {language === 'en'
-                ? `${staff.relationType === 'Husband' ? 'W/o' : 'S/o'}: ${staff.fatherOrHusbandName}`
-                : `${staff.relationType === 'Husband' ? 'प/नि:' : 'सुपुत्र:'} ${staff.fatherOrHusbandName}`}
+              {formatRelationLabel(staff.relationType, staff.fatherOrHusbandName, language)}
             </div>
 
             {/* Designation Pill - Dynamic & Stylish */}
