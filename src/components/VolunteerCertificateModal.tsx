@@ -12,9 +12,10 @@ import { OtpVerificationModal } from './OtpVerificationModal';
 import { CandidatePhotoUploader } from './CandidatePhotoUploader';
 import { BrandLogo } from './common/BrandLogo';
 import { SendCertificateModal } from './SendCertificateModal';
+import toast from 'react-hot-toast';
 import { RoyalFourCorners, RoyalCenterFlourish } from './common/RoyalCertificateBorder';
 import { formatCertificateNumber, formatCertificateIssueDate, formatCertificateDuration } from '../utils/certificateUtils';
-import { saveCertificateToRegistry } from '../services/certificateRegistryService';
+import { saveCertificateToRegistry, getCertificateById } from '../services/certificateRegistryService';
 import { CertificateLanguage, getVolunteerCertMatter } from '../utils/certificateLanguageUtils';
 import { CertificateLanguageToggle } from './common/CertificateLanguageToggle';
 import { OfficialVerifiedBadge } from './common/OfficialVerifiedBadge';
@@ -118,6 +119,15 @@ export const VolunteerCertificateModal: React.FC<Props> = ({ volunteer, onClose 
       setShowEditPanel(true);
       return false;
     }
+
+    // Check Admin Approval Status - strictly forbid unapproved certificate download
+    const regItem = getCertificateById(certNumber) || getCertificateById(volunteerId);
+    if (regItem && regItem.approvalStatus && regItem.approvalStatus !== 'approved') {
+      const statusHindi = regItem.approvalStatus === 'rejected' ? 'अस्वीकृत (Rejected)' : 'लंबित (Pending Approval)';
+      toast.error(`⚠️ यह प्रमाण पत्र अभी एडमिन द्वारा स्वीकृत नहीं है (स्थिति: ${statusHindi})। एडमिन अप्रूवल के बाद ही डाउनलोड संभव है।`, { duration: 6000 });
+      return false;
+    }
+
     setPhotoError(null);
     return true;
   };

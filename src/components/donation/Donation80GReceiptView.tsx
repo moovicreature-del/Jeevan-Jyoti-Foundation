@@ -39,6 +39,7 @@ import { triggerDonationReceiptEmail } from '../../services/emailService';
 import { useDonationPaymentSettings } from '../../hooks/useDonationPaymentSettings';
 import { OfficialVerifiedBadge } from '../common/OfficialVerifiedBadge';
 import { OtpVerificationModal } from '../OtpVerificationModal';
+import { getCertificateById } from '../../services/certificateRegistryService';
 
 interface Props {
   donation: DonationRecord;
@@ -117,13 +118,34 @@ export const Donation80GReceiptView: React.FC<Props> = ({
     }
   };
 
+  const checkAdminApproval = (): boolean => {
+    // Check direct donation record approval status
+    if (donation.approvalStatus && donation.approvalStatus !== 'approved') {
+      const statusHindi = donation.approvalStatus === 'rejected' ? 'अस्वीकृत (Rejected)' : 'लंबित (Pending Approval)';
+      toast.error(`⚠️ यह दान रसीद अभी एडमिन द्वारा स्वीकृत नहीं है (स्थिति: ${statusHindi})। एडमिन अप्रूवल के बाद ही डाउनलोड संभव है।`, { duration: 6000 });
+      return false;
+    }
+
+    // Also check certificate registry if registered as 80G receipt item
+    const regItem = getCertificateById(receiptNumber) || getCertificateById(donation.id);
+    if (regItem && regItem.approvalStatus && regItem.approvalStatus !== 'approved') {
+      const statusHindi = regItem.approvalStatus === 'rejected' ? 'अस्वीकृत (Rejected)' : 'लंबित (Pending Approval)';
+      toast.error(`⚠️ यह दान रसीद अभी एडमिन द्वारा स्वीकृत नहीं है (स्थिति: ${statusHindi})। एडमिन अप्रूवल के बाद ही डाउनलोड संभव है।`, { duration: 6000 });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleInitiateDownloadPdf = () => {
+    if (!checkAdminApproval()) return;
     setPendingAction('pdf');
     setIsOtpOpen(true);
   };
 
   // Handle Native Print
   const handleInitiatePrint = () => {
+    if (!checkAdminApproval()) return;
     setPendingAction('print');
     setIsOtpOpen(true);
   };

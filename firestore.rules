@@ -79,6 +79,12 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated() && isApprovedAdmin();
     }
 
+    // WhatsApp Subscribers & Opt-in Consent (Public write for donors & volunteers, read for admin/public)
+    match /whatsapp_subscribers/{subscriberId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
     // Admin Credentials Configuration (Read & Write for login verification and updates)
     match /admin_credentials/{configId} {
       allow read: if true;

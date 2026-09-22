@@ -43,17 +43,13 @@ export const CreateAdminCredentialsForm: React.FC<CreateAdminCredentialsFormProp
   // Role Selection
   const [selectedRole, setSelectedRole] = useState<'superadmin' | 'admin'>(defaultRole);
 
-  // Identity
+  // Identity - Keep mobile empty by default so user manually enters it
   const [name, setName] = useState<string>(
     defaultRole === 'superadmin' ? 'श्री शैलेश प्रधान जी' : 'अधिकृत एडमिन (व्यवस्थापक)'
   );
-  const [mobile, setMobile] = useState<string>(
-    defaultRole === 'superadmin' ? SUPER_ADMIN_PHONE : ADMIN_PHONE
-  );
+  const [mobile, setMobile] = useState<string>('');
 
-  // Security Verification Method
-  const [verificationMethod, setVerificationMethod] = useState<'pin' | 'otp'>('pin');
-  const [securityPin, setSecurityPin] = useState<string>('805236');
+  // Security Verification Method - Mobile OTP Required
   const [otpInput, setOtpInput] = useState<string>('');
   const [isOtpSent, setIsOtpSent] = useState<boolean>(false);
   const [isOtpSending, setIsOtpSending] = useState<boolean>(false);
@@ -79,19 +75,15 @@ export const CreateAdminCredentialsForm: React.FC<CreateAdminCredentialsFormProp
     setSelectedRole(role);
     if (role === 'superadmin') {
       setName('श्री शैलेश प्रधान जी');
-      setMobile(SUPER_ADMIN_PHONE);
-      setSecurityPin('805236');
     } else {
       setName('अधिकृत एडमिन (व्यवस्थापक)');
-      setMobile(ADMIN_PHONE);
-      setSecurityPin('894816');
     }
     setIsOtpVerified(false);
     setIsOtpSent(false);
     setOtpInput('');
   };
 
-  // Send Mobile OTP
+  // Send Mobile OTP via Real SMS / WhatsApp
   const handleSendOtp = async () => {
     const cleanPhone = mobile.replace(/\D/g, '').slice(-10);
     if (cleanPhone.length !== 10) {
@@ -111,36 +103,23 @@ export const CreateAdminCredentialsForm: React.FC<CreateAdminCredentialsFormProp
         setIsOtpSent(true);
         setOtpSessionToken(res.sessionToken || '');
         toast.success(
-          `सत्यापन कोड (OTP) मोबाइल +91-${cleanPhone} पर भेज दिया गया है!`
+          `सत्यापन कोड (OTP) मोबाइल +91-${cleanPhone} एवं WhatsApp पर भेज दिया गया है!`
         );
       } else {
-        toast.error('OTP भेजने में असमर्थ। कृपया मास्टर सुरक्षा कोड विकल्प का उपयोग करें।');
+        toast.error(res.message || 'OTP भेजने में असमर्थ। कृपया नेटवर्क की जांच करें।');
       }
     } catch {
-      toast.error('नेटवर्क त्रुटि: कृपया मास्टर सुरक्षा कोड (805236) से जारी रखें।');
+      toast.error('नेटवर्क त्रुटि: कृपया पुनः प्रयास करें।');
     } finally {
       setIsOtpSending(false);
     }
   };
 
-  // Verify Mobile OTP
+  // Verify Mobile OTP strictly via real SMS/WhatsApp service
   const handleVerifyOtp = async () => {
     const cleanPhone = mobile.replace(/\D/g, '').slice(-10);
     if (!otpInput || otpInput.trim().length < 6) {
       toast.error('कृपया 6 अंकों का OTP कोड दर्ज करें!');
-      return;
-    }
-
-    // Direct match for test or session verification
-    if (
-      otpInput.trim() === '805236' ||
-      otpInput.trim() === '894816' ||
-      otpInput.trim() === '123456' ||
-      otpInput.trim() === '786786' ||
-      otpInput.trim() === cleanPhone.slice(-6)
-    ) {
-      setIsOtpVerified(true);
-      toast.success('✓ मोबाइल OTP सफलतापूर्वक सत्यापित हुआ!');
       return;
     }
 
@@ -200,7 +179,6 @@ export const CreateAdminCredentialsForm: React.FC<CreateAdminCredentialsFormProp
         mobile: cleanMobile,
         newUserId: cleanUsername,
         newPassword: cleanPassword,
-        securityAuthCode: verificationMethod === 'pin' ? securityPin.trim() : undefined,
         isOtpVerified: isOtpVerified,
         modifierName: name.trim() || 'Admin Portal'
       });
@@ -363,7 +341,7 @@ export const CreateAdminCredentialsForm: React.FC<CreateAdminCredentialsFormProp
             </div>
             <div>
               <span className="block text-xs font-black text-slate-900">सुपर एडमिन (Super Admin)</span>
-              <span className="text-[10px] text-slate-500">श्री शैलेश प्रधान (8052361666)</span>
+              <span className="text-[10px] text-slate-500">संस्था प्रमुख / मुख्य प्रशासक</span>
             </div>
           </button>
 
@@ -386,13 +364,13 @@ export const CreateAdminCredentialsForm: React.FC<CreateAdminCredentialsFormProp
             </div>
             <div>
               <span className="block text-xs font-black text-slate-900">अधिकृत एडमिन (Admin)</span>
-              <span className="text-[10px] text-slate-500">व्यवस्थापक (8948165666)</span>
+              <span className="text-[10px] text-slate-500">प्रशासनिक व्यवस्थापक</span>
             </div>
           </button>
         </div>
       </div>
 
-      {/* 2. Admin Name & Mobile */}
+      {/* 2. Admin Name & Mobile (Manual Entry) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="block text-[11px] font-bold text-slate-700 mb-1">
@@ -413,7 +391,7 @@ export const CreateAdminCredentialsForm: React.FC<CreateAdminCredentialsFormProp
 
         <div>
           <label className="block text-[11px] font-bold text-slate-700 mb-1">
-            पंजीकृत मोबाइल (Mobile No) *
+            पंजीकृत मोबाइल नंबर (Manual Enter) *
           </label>
           <div className="relative">
             <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -421,8 +399,12 @@ export const CreateAdminCredentialsForm: React.FC<CreateAdminCredentialsFormProp
               type="tel"
               maxLength={10}
               value={mobile}
-              onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
-              placeholder="10-अंकीय मोबाइल नंबर"
+              onChange={(e) => {
+                setMobile(e.target.value.replace(/\D/g, ''));
+                setIsOtpVerified(false);
+                setIsOtpSent(false);
+              }}
+              placeholder="10-अंकीय मोबाइल नंबर दर्ज करें"
               required
               className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono"
             />
@@ -430,100 +412,57 @@ export const CreateAdminCredentialsForm: React.FC<CreateAdminCredentialsFormProp
         </div>
       </div>
 
-      {/* 3. Security Verification */}
-      <div className="p-3.5 bg-amber-50/60 rounded-2xl border border-amber-200/80 space-y-2.5">
+      {/* 3. Security Verification via Real Mobile / WhatsApp OTP */}
+      <div className="p-3.5 bg-blue-50/60 rounded-2xl border border-blue-200/80 space-y-2.5">
         <div className="flex items-center justify-between">
-          <label className="text-[11px] font-black text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
-            <span>2. सुरक्षा प्रमाणीकरण (Security Verification) *</span>
+          <label className="text-[11px] font-black text-blue-950 uppercase tracking-wider flex items-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+            <span>2. मोबाइल OTP सुरक्षा सत्यापन (Live Verification) *</span>
           </label>
-          <div className="flex items-center gap-1 text-[10px] font-bold bg-white p-0.5 rounded-lg border border-amber-200">
-            <button
-              type="button"
-              onClick={() => setVerificationMethod('pin')}
-              className={`px-2 py-0.5 rounded-md transition cursor-pointer ${
-                verificationMethod === 'pin'
-                  ? 'bg-amber-600 text-white'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              मास्टर पिन (PIN)
-            </button>
-            <button
-              type="button"
-              onClick={() => setVerificationMethod('otp')}
-              className={`px-2 py-0.5 rounded-md transition cursor-pointer ${
-                verificationMethod === 'otp'
-                  ? 'bg-amber-600 text-white'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              मोबाइल OTP
-            </button>
-          </div>
+          <span className="text-[10px] font-bold text-blue-700 bg-white px-2 py-0.5 rounded-md border border-blue-200">
+            SMS & WhatsApp
+          </span>
         </div>
 
-        {/* Verification Option 1: Master Security PIN */}
-        {verificationMethod === 'pin' && (
-          <div className="space-y-1">
-            <div className="relative">
-              <Lock className="w-4 h-4 text-amber-600 absolute left-3 top-1/2 -translate-y-1/2" />
+        <div className="space-y-2">
+          {isOtpVerified ? (
+            <div className="p-2.5 bg-emerald-100 border border-emerald-300 rounded-xl text-xs text-emerald-900 font-bold flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-600" />
+              <span>मोबाइल (+91-{mobile}) पर भेजे गए OTP से प्रमाणीकरण सफल हुआ!</span>
+            </div>
+          ) : (
+            <div className="flex gap-2">
               <input
                 type="text"
-                value={securityPin}
-                onChange={(e) => setSecurityPin(e.target.value)}
-                placeholder="फाउंडेशन मास्टर कोड (उदा. 805236 या JJF2026)"
-                className="w-full pl-9 pr-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-mono font-black text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500 tracking-wider shadow-xs"
+                maxLength={6}
+                value={otpInput}
+                onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ''))}
+                placeholder="6-अंकीय लाइव OTP कोड दर्ज करें"
+                className="flex-1 px-3 py-2 bg-white border border-blue-300 rounded-xl text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+              {!isOtpSent ? (
+                <button
+                  type="button"
+                  onClick={handleSendOtp}
+                  disabled={isOtpSending || mobile.length !== 10}
+                  className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                >
+                  {isOtpSending ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  <span>OTP भेजें</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleVerifyOtp}
+                  className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>सत्यापित करें</span>
+                </button>
+              )}
             </div>
-            <p className="text-[10px] text-amber-800 leading-tight">
-              💡 फाउंडेशन अधिकृत कोड: <strong className="font-mono">805236</strong> (सुपर एडमिन) अथवा <strong className="font-mono">894816</strong> (एडमिन)
-            </p>
-          </div>
-        )}
-
-        {/* Verification Option 2: Live Mobile OTP */}
-        {verificationMethod === 'otp' && (
-          <div className="space-y-2">
-            {isOtpVerified ? (
-              <div className="p-2 bg-emerald-100 border border-emerald-300 rounded-xl text-xs text-emerald-900 font-bold flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-600" />
-                <span>मोबाइल (+91-{mobile}) OTP द्वारा सफलतापूर्वक सत्यापित हो चुका है!</span>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  maxLength={6}
-                  value={otpInput}
-                  onChange={(e) => setOtpInput(e.target.value)}
-                  placeholder="6-अंकीय OTP कोड"
-                  className="flex-1 px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
-                {!isOtpSent ? (
-                  <button
-                    type="button"
-                    onClick={handleSendOtp}
-                    disabled={isOtpSending}
-                    className="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-                  >
-                    {isOtpSending ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                    <span>OTP भेजें</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleVerifyOtp}
-                    className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-                  >
-                    <Check className="w-3.5 h-3.5" />
-                    <span>सत्यापित करें</span>
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* 4. Desired Username (User ID) */}

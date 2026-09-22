@@ -14,12 +14,14 @@
 
 import { auth } from '../lib/firebase';
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
+import { sendWhatsAppOtp } from './whatsappCloudService';
 
 export interface SendOtpRequest {
   phone: string;
   certificateId?: string;
   recipientName?: string;
   certificateType?: string;
+  purpose?: 'certificate_download' | 'admin_login' | 'superadmin_login' | 'credentials_create';
   preferredChannel?: 'sms' | 'whatsapp' | 'firebase';
 }
 
@@ -274,20 +276,52 @@ export async function sendRealOtp(req: SendOtpRequest): Promise<SendOtpResponse>
   // WhatsApp OTP Link for instant guaranteed delivery (especially for DND filtered numbers)
   const orgName = 'जीवन ज्योति फाउंडेशन गाजीपुर (JJF Ghazipur)';
   const certRef = req.certificateId ? ` [प्रमाण पत्र/ID: ${req.certificateId}]` : '';
-  const itemType = req.certificateType === 'staff_id' 
-    ? 'स्टाफ आई-कार्ड (Staff ID Card)' 
-    : req.certificateType === 'volunteer_id' 
-    ? 'स्वयंसेवक पहचान पत्र (Volunteer ID Card)' 
-    : 'आधिकारिक प्रमाण पत्र (Official Certificate)';
+  let itemType = 'आधिकारिक प्रमाण पत्र (Official Certificate)';
+  let actionText = 'डाउनलोड करने';
+
+  if (req.purpose === 'superadmin_login') {
+    itemType = '👑 सुपर एडमिन पोर्टल (Super Admin Portal)';
+    actionText = 'में सुरक्षित लॉगिन करने';
+  } else if (req.purpose === 'admin_login') {
+    itemType = '🛡️ एडमिन पोर्टल (Admin Portal)';
+    actionText = 'में सुरक्षित लॉगिन करने';
+  } else if (req.purpose === 'credentials_create') {
+    itemType = '🔑 एडमिन क्रेडेंशियल्स (Username/Password Creation)';
+    actionText = 'सुरक्षित करने';
+  } else if (req.certificateType === 'staff_id') {
+    itemType = 'स्टाफ आई-कार्ड (Staff ID Card)';
+  } else if (req.certificateType === 'volunteer_id') {
+    itemType = 'स्वयंसेवक पहचान पत्र (Volunteer ID Card)';
+  }
+
   const waMessage = encodeURIComponent(
     `*${orgName}*\n\n` +
-    `नमस्ते ${req.recipientName || 'सम्मानित सदस्य'} जी,\n` +
-    `आपका ${itemType} डाउनलोड करने हेतु अधिकृत सुरक्षा सत्यापन OTP कोड है:\n\n` +
+    `नमस्ते ${req.recipientName || 'सम्मानित पदाधिकारी/सदस्य'} जी,\n` +
+    `आपके ${itemType} ${actionText} हेतु अधिकृत सुरक्षा सत्यापन OTP कोड है:\n\n` +
     `🔑 *${generatedOtp}*\n\n` +
-    `📌 यह कोड 10 मिनट के लिए मान्य है। कृपया इसे किसी के साथ साझा न करें।${certRef}\n` +
+    `📌 यह कोड 10 मिनट के लिए मान्य है। किसी भी अनधिकृत व्यक्ति के साथ साझा न करें।${certRef}\n` +
     `अधिकृत हेल्पलाइन: +91-8052361666 | Reg: UP/2018/0207700`
   );
   const whatsappUrl = `https://api.whatsapp.com/send?phone=91${cleanPhone}&text=${waMessage}`;
+
+  // 4. Trigger Meta / WhatsApp Cloud API alongside SMS Gateway in background
+  try {
+    sendWhatsAppOtp({
+      phone: cleanPhone,
+      otp: generatedOtp,
+      recipientName: req.recipientName,
+      purpose: req.purpose,
+      certificateId: req.certificateId
+    }).then((waRes) => {
+      if (waRes.success && waRes.channel === 'cloud_api') {
+        console.log(`[WhatsAppCloudApi] Successfully dispatched OTP to +91-${cleanPhone}`);
+      }
+    }).catch((waErr) => {
+      console.debug('[WhatsAppCloudApi] Background dispatch note:', waErr);
+    });
+  } catch (waTriggerErr) {
+    console.debug('[WhatsAppCloudApi] Call trigger note:', waTriggerErr);
+  }
 
   return {
     success: true,

@@ -281,19 +281,11 @@ export async function createOrSetAdminCredentials(params: {
   }
 
   // Security Verification check:
-  // Must either have isOtpVerified=true OR valid security code
-  const isValidAuthCode =
-    cleanCode === '805236' ||
-    cleanCode === '894816' ||
-    cleanCode.toUpperCase() === 'JJF2026' ||
-    cleanCode === '123456' ||
-    cleanCode === '786786' ||
-    (cleanMobile.length === 10 && cleanCode === cleanMobile.slice(-6));
-
-  if (!params.isOtpVerified && !isValidAuthCode) {
+  // Strictly require mobile OTP verification
+  if (!params.isOtpVerified) {
     return {
       success: false,
-      message: 'अमान्य सुरक्षा कोड / OTP! कृपया पंजीकृत मोबाइल पर भेजा गया OTP अथवा अधिकृत सुरक्षा पिन (उदा. 805236) दर्ज करें।'
+      message: 'सुरक्षा प्रमाणीकरण विफल! क्रेडेंशियल बनाने अथवा बदलने हेतु मोबाइल पर भेजे गए OTP का सत्यापन अनिवार्य है।'
     };
   }
 

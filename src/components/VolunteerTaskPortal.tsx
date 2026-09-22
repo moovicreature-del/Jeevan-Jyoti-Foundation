@@ -8,6 +8,8 @@ import { DEFAULT_STRUCTURED_ADDRESS, StructuredAddress } from '../data/locationD
 import { CandidatePhotoUploader } from './CandidatePhotoUploader';
 import { formatCertificateNumber } from '../utils/certificateUtils';
 import { FOUNDATION_INFO } from '../data/foundationData';
+import { saveWhatsAppConsent } from '../services/whatsappConsentFirestoreService';
+import toast from 'react-hot-toast';
 
 interface Props {
   onSelectVolunteerCertificate: (volunteer: Volunteer) => void;
@@ -36,6 +38,8 @@ export const VolunteerTaskPortal: React.FC<Props> = ({
   const [showRegModal, setShowRegModal] = useState(false);
   const [newPhoto, setNewPhoto] = useState<string>('');
   const [newName, setNewName] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [getUpdatesWhatsApp, setGetUpdatesWhatsApp] = useState<boolean>(true);
   const [newRelationType, setNewRelationType] = useState<'Father' | 'Husband' | 'Guardian'>('Father');
   const [newFather, setNewFather] = useState('');
   const [newJoinDate, setNewJoinDate] = useState(() => getTodayDateString());
@@ -64,11 +68,15 @@ export const VolunteerTaskPortal: React.FC<Props> = ({
       return;
     }
 
+    const cleanPhone = newPhone.replace(/\D/g, '').slice(-10);
+    const volunteerId = formatCertificateNumber('VOL', newJoinDate || new Date(), volunteers.length + 1);
+
     const newVol: Volunteer = {
-      id: formatCertificateNumber('VOL', newJoinDate || new Date(), volunteers.length + 1),
+      id: volunteerId,
       name: newName.trim(),
       fatherName: newFather.trim(),
       relationType: newRelationType,
+      phone: cleanPhone ? `+91-${cleanPhone}` : undefined,
       role: 'सक्रिय स्वयंसेवक (Active Volunteer)',
       area: newArea,
       areaHindi: newArea === 'Education & Child Literacy' ? 'निःशुल्क बाल शिक्षा' : 'स्वास्थ्य एवं अन्नपूर्णा सेवा',
@@ -81,12 +89,32 @@ export const VolunteerTaskPortal: React.FC<Props> = ({
       state: regAddress.state,
       district: regAddress.district,
       block: regAddress.block,
-      wardOrVillage: regAddress.wardOrVillage
+      wardOrVillage: regAddress.wardOrVillage,
+      whatsappConsent: getUpdatesWhatsApp,
+      whatsappOptInAt: getUpdatesWhatsApp ? new Date().toISOString() : undefined
     };
+
+    // If opted into WhatsApp updates, save consent to Firestore and trigger welcome message
+    if (getUpdatesWhatsApp && cleanPhone) {
+      saveWhatsAppConsent({
+        phone: cleanPhone,
+        name: newVol.name,
+        category: 'volunteer',
+        referenceId: volunteerId,
+        details: `क्षेत्र: ${newVol.areaHindi || newVol.area}`
+      }).then(res => {
+        if (res.welcomeSent) {
+          toast.success(`🎉 स्वयंसेवक पंजीकरण पूर्ण! WhatsApp पर स्वागत संदेश प्रेषित हुआ।`, { duration: 4000 });
+        }
+      }).catch(err => {
+        console.debug('WhatsApp volunteer consent log note:', err);
+      });
+    }
 
     setVolunteers([newVol, ...volunteers]);
     setShowRegModal(false);
     setNewName('');
+    setNewPhone('');
     setNewFather('');
     setNewPhoto('');
     setNewJoinDate(getTodayDateString());
@@ -641,6 +669,50 @@ export const VolunteerTaskPortal: React.FC<Props> = ({
                     <span>📅</span> स्वतः आज की वर्तमान तिथि ({new Date(newJoinDate || getTodayDateString()).toLocaleDateString('hi-IN', { day: '2-digit', month: 'short', year: 'numeric' })})
                   </div>
                 </div>
+
+                {/* Mobile / WhatsApp Number Input */}
+                <div>
+                  <label className="block font-bold text-gray-800 mb-1">
+                    {isHindi ? 'मोबाइल / व्हाट्सएप नंबर (Mobile / WhatsApp No.)' : 'Mobile / WhatsApp Number'}
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2.5 text-gray-500 font-semibold text-sm">+91</span>
+                    <input
+                      type="tel"
+                      maxLength={10}
+                      value={newPhone}
+                      onChange={(e) => setNewPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      placeholder="9876543210"
+                      className="w-full pl-12 pr-3 py-2 border rounded-xl bg-white text-sm tracking-wider"
+                    />
+                  </div>
+                  <p className="text-[11px] text-gray-500 mt-1">प्रमाण पत्र डाउनलोड एवं सेवा सूचना प्रेषण हेतु</p>
+                </div>
+
+                {/* Get updates via WhatsApp Checkbox */}
+                <label 
+                  id="volunteer-whatsapp-updates-consent"
+                  className="flex items-start gap-2.5 text-xs text-emerald-900 bg-emerald-50/90 p-3 rounded-xl border border-emerald-200 cursor-pointer select-none hover:bg-emerald-100/70 transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    id="checkbox-volunteer-whatsapp-optin"
+                    checked={getUpdatesWhatsApp}
+                    onChange={(e) => setGetUpdatesWhatsApp(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 text-emerald-600 rounded border-emerald-300 focus:ring-emerald-500 cursor-pointer"
+                  />
+                  <div>
+                    <span className="font-bold flex items-center gap-1.5 text-emerald-950">
+                      <span>💬 WhatsApp पर अपडेट्स प्राप्त करें (Get updates via WhatsApp)</span>
+                      <span className="text-[10px] bg-emerald-200 text-emerald-900 font-black px-1.5 py-0.2 rounded-full uppercase tracking-wider">
+                        Active
+                      </span>
+                    </span>
+                    <p className="text-[11px] text-emerald-700 mt-0.5 leading-snug">
+                      स्वयंसेवक आईडी, प्रमाण पत्र डाउनलोड लिंक, एवं आगामी सेवा अभियानों की सूचनाएं सीधे WhatsApp पर प्राप्त करने हेतु सहमति देते हैं।
+                    </p>
+                  </div>
+                </label>
 
                 <div className="flex gap-2 pt-2">
                   <button

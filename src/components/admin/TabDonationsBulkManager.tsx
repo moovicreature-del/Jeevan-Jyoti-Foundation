@@ -1,6 +1,6 @@
 // ============================================================================
-// JEEVAN JYOTI FOUNDATION - ADMIN 80G DONATIONS & BULK RECEIPTS MANAGER
-// एडमिन 80G दान प्रबंधन, थोक रसीद डाउनलोड एवं आयकर फॉर्म 10BD CSV एक्सपोर्ट
+// JEEVAN JYOTI FOUNDATION - ADMIN DONATIONS & BULK RECEIPTS MANAGER
+// एडमिन दान प्रबंधन, थोक रसीद डाउनलोड एवं दान रिपोर्ट CSV एक्सपोर्ट
 // ============================================================================
 
 import React, { useState, useMemo } from 'react';
@@ -96,7 +96,7 @@ export const TabDonationsBulkManager: React.FC = () => {
   const totalAmount = filteredDonations.reduce((sum, d) => sum + (d.amount || 0), 0);
   const donorsWithPan = filteredDonations.filter((d) => d.panNumber && d.panNumber.length === 10).length;
 
-  // Export CSV for 80G Tax Filing (Form 10BD format compliant)
+  // Export CSV for Donations Filing & Records
   const handleExportForm10BDCsv = () => {
     try {
       const headers = [
@@ -112,8 +112,7 @@ export const TabDonationsBulkManager: React.FC = () => {
         'Mode of Payment',
         'Transaction Ref / UTR',
         'Purpose of Donation',
-        '80G Eligibility',
-        'Section Code'
+        'Status'
       ];
 
       const rows = filteredDonations.map((d) => [
@@ -129,8 +128,7 @@ export const TabDonationsBulkManager: React.FC = () => {
         `"${d.paymentMode || 'UPI / Online'}"`,
         `"${d.transactionRef || ''}"`,
         `"${(d.purposeHindi || d.purpose || 'General Welfare').replace(/"/g, '""')}"`,
-        '"Eligible u/s 80G(5)(vi)"',
-        '"Sec 80G(5)"'
+        '"Confirmed Donation"'
       ]);
 
       const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');

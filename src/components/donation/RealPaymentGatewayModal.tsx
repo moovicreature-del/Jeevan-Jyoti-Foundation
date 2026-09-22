@@ -38,6 +38,7 @@ import { useDonationPaymentSettings } from '../../hooks/useDonationPaymentSettin
 import { triggerDonationReceiptEmail } from '../../services/emailService';
 import { saveCertificateToRegistry } from '../../services/certificateRegistryService';
 import { formatCertificateNumber } from '../../utils/certificateUtils';
+import { saveWhatsAppConsent } from '../../services/whatsappConsentFirestoreService';
 import {
   validateUtrFormat,
   isTransactionRefAlreadyUsed,
@@ -61,6 +62,7 @@ export interface DonorPaymentData {
   amount: number;
   purpose: string;
   photoUrl?: string;
+  whatsappConsent?: boolean;
 }
 
 interface Props {
@@ -298,7 +300,7 @@ export const RealPaymentGatewayModal: React.FC<Props> = ({
     setProcessingMessage(`UTR / संदर्भ संख्या: ${cleanRef} सत्यापित हुई...`);
 
     await new Promise((r) => setTimeout(r, 700));
-    setProcessingMessage('सफल! अधिकृत 80G दान रसीद व प्रमाण पत्र जारी किया जा रहा है...');
+    setProcessingMessage('सफल! अधिकृत दान रसीद व प्रमाण पत्र जारी किया जा रहा है...');
     await new Promise((r) => setTimeout(r, 500));
 
     // Generate official authentic donation record
@@ -329,10 +331,13 @@ export const RealPaymentGatewayModal: React.FC<Props> = ({
       transactionRef: cleanRef,
       transactionStatus: 'verified',
       transactionHash: transactionHash || `JJF-TXN-${cleanRef.slice(-6)}`,
-      taxExemptEligible: true, // Eligible for 80G tax exemption with real banking proof
-      agree80GDeclaration: true,
+      taxExemptEligible: false,
+      agree80GDeclaration: false,
       status: 'confirmed',
+      approvalStatus: 'pending',
       photoUrl: donorData.photoUrl || undefined,
+      whatsappConsent: donorData.whatsappConsent ?? true,
+      whatsappOptInAt: donorData.whatsappConsent ? new Date().toISOString() : undefined,
       emailSent: Boolean(donorData.email && donorData.email.includes('@')),
       emailSentAt: donorData.email ? new Date().toISOString() : undefined
     };
@@ -354,8 +359,20 @@ export const RealPaymentGatewayModal: React.FC<Props> = ({
         photoUrl: newDonation.photoUrl,
         details: `दान राशि: ₹${newDonation.amount.toLocaleString('en-IN')} • भुगतान: ${modeTitle} • सत्यापित UTR: ${cleanRef}`,
         status: 'certified',
+        approvalStatus: 'pending',
         rawDonation: newDonation
       });
+
+      // If donor consented to WhatsApp updates, store in Firestore and dispatch WhatsApp Welcome message
+      if (donorData.whatsappConsent) {
+        saveWhatsAppConsent({
+          phone: cleanPhone,
+          name: newDonation.donorName,
+          category: 'donor',
+          referenceId: receiptNo,
+          details: `दान: ₹${newDonation.amount} • ${newDonation.purpose}`
+        }).catch(err => console.debug('WhatsApp consent dispatch error:', err));
+      }
     } catch (e) {
       console.warn('Certificate registry sync error:', e);
     }

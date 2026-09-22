@@ -67,6 +67,8 @@ export interface Volunteer {
   status: 'active' | 'certified' | 'leader';
   rank?: number;
   phone?: string;
+  whatsappConsent?: boolean;
+  whatsappOptInAt?: string;
   country?: string;
   state?: string;
   district?: string;
@@ -82,6 +84,8 @@ export interface DonationRecord {
   panNumber?: string;
   email?: string;
   phone?: string;
+  whatsappConsent?: boolean;
+  whatsappOptInAt?: string;
   address?: string;
   amount: number;
   amountInWords?: string;
@@ -104,6 +108,7 @@ export interface DonationRecord {
   block?: string;
   wardOrVillage?: string;
   status?: 'confirmed' | 'pending' | 'verified';
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
   certificateUrl?: string;
   emailSent?: boolean;
   emailSentAt?: string;
@@ -277,6 +282,9 @@ export interface SliderPhotoItem {
   url: string;
   title?: string;
   description?: string;
+  category?: string;
+  location?: string;
+  date?: string;
   createdAt?: string;
 }
 
@@ -289,10 +297,14 @@ export interface AppHomeContent {
   footerText: string;
   bannerImageUrl: string;
   bannerImages?: string[]; // Array of multiple photo URLs
-  sliderPhotos?: SliderPhotoItem[]; // Rich multi-photo items with title & description
+  sliderPhotos?: SliderPhotoItem[]; // Section 1: लाइव फ़ोटो स्लाइड्स (Live Photo Slides, up to 15)
+  campaignGalleryPhotos?: SliderPhotoItem[]; // Section 2: ग़ाज़ीपुर सेवा अभियानों की लाइव फ़ोटो गैलरी (Campaign Live Gallery, up to 15)
+  recentEventsPhotos?: SliderPhotoItem[]; // Section 3: हाल ही में आयोजित सेवा कार्यक्रम (Recent Events, up to 15)
+  ruralWorkPhotos?: SliderPhotoItem[]; // Section 4: ग़ाज़ीपुर के ग्रामीण अंचलों में जीवन ज्योति का कार्य (Rural Work Field, up to 15)
   sliderAutoPlay?: boolean;
   sliderInterval?: number; // In seconds
   bannerVideoUrl: string;
+  ruralWorkVideoUrl?: string; // Section 4: ग़ाज़ीपुर के ग्रामीण अंचलों में यूट्यूब वीडियो (HD Auto-play)
   bannerTitle?: string;
   bannerSubtitle?: string;
   appLogoUrl?: string;

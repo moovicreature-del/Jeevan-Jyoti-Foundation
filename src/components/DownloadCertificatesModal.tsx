@@ -32,7 +32,8 @@ import {
   CloudOff,
   Cloud,
   Info,
-  MessageSquare
+  MessageSquare,
+  Lock
 } from 'lucide-react';
 import {
   RegisteredCertificateItem,
@@ -87,6 +88,7 @@ interface DownloadCertificatesModalProps {
   onPreviewTaskCert: (task: TaskRecord) => void;
   onPreviewFestivalCert: (fest: FestivalGreetingRecord) => void;
   initialPhone?: string;
+  initialCertId?: string;
 }
 
 export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps> = ({
@@ -97,12 +99,14 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
   onPreviewDonationCert,
   onPreviewTaskCert,
   onPreviewFestivalCert,
-  initialPhone = ''
+  initialPhone = '',
+  initialCertId = ''
 }) => {
   // Wizard steps: 'phone' -> 'otp' -> 'list'
   const [step, setStep] = useState<'phone' | 'otp' | 'list'>('phone');
-  // Manual entry: must be entered manually by user, never pre-filled
+  // Manual entry or targeted phone from link
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [targetCertId, setTargetCertId] = useState<string>('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
 
   // Network & Offline Cache States
@@ -178,10 +182,9 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
     };
   }, []);
 
-  // Reset or initialize on open - strictly require manual entry
+  // Reset or initialize on open - if initialPhone provided (e.g. from WhatsApp/SMS download link), start OTP verification for it
   useEffect(() => {
     if (isOpen) {
-      setPhoneNumber('');
       setPhoneError(null);
       setOtpError(null);
       setOtp(['', '', '', '', '', '']);
@@ -197,9 +200,24 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
       // Load cached phone summaries from localStorage
       const summaries = getAllOfflineCachedPhoneSummaries();
       setOfflineRecentPhones(summaries);
-      setStep('phone');
+
+      if (initialCertId) {
+        setTargetCertId(initialCertId.trim());
+      } else {
+        setTargetCertId('');
+      }
+
+      if (initialPhone && normalizePhoneNumber(initialPhone).length === 10) {
+        const clean = normalizePhoneNumber(initialPhone);
+        setPhoneNumber(clean);
+        // Automatically start OTP flow for the registered phone number from the link
+        handleSelectNumberAndSendOtp(clean);
+      } else {
+        setPhoneNumber('');
+        setStep('phone');
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, initialPhone, initialCertId]);
 
   // Timer countdown for OTP
   useEffect(() => {
@@ -601,6 +619,17 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
 
   // Direct Download Trigger with mandatory Server-Side Firebase Admin QR verification step
   const handleDirectDownload = async (item: RegisteredCertificateItem, format: 'jpg' | 'pdf') => {
+    // Check Admin Approval for all certificates & donation receipts (exempt only festival_greeting)
+    if (item.type !== 'festival_greeting' && item.approvalStatus !== 'approved') {
+      const isRejected = item.approvalStatus === 'rejected';
+      const msg = isRejected
+        ? `⚠️ यह प्रमाण पत्र/दान रसीद संस्था एडमिन द्वारा अस्वीकृत (Rejected) कर दी गई है। कारण: ${item.rejectionReason || 'विवरण अपूर्ण'}`
+        : '⏳ यह प्रमाण पत्र/दान रसीद अभी संस्था एडमिन द्वारा अनुमोदन (Approval) के लिए प्रतीक्षारत (Pending) है। एडमिन द्वारा स्वीकृति के बाद ही इसे डाउनलोड किया जा सकता है।';
+      setVerificationError(msg);
+      alert(msg);
+      return;
+    }
+
     setActiveExportItem(item);
     setDownloadingId(`${item.id}-${format}`);
     setVerificationError(null);
@@ -692,6 +721,17 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
 
   // Direct Print with Firebase Admin Verification
   const handleDirectPrint = async (item: RegisteredCertificateItem) => {
+    // Check Admin Approval for all certificates & donation receipts (exempt only festival_greeting)
+    if (item.type !== 'festival_greeting' && item.approvalStatus !== 'approved') {
+      const isRejected = item.approvalStatus === 'rejected';
+      const msg = isRejected
+        ? `⚠️ यह प्रमाण पत्र/दान रसीद संस्था एडमिन द्वारा अस्वीकृत है। मुद्रण की अनुमति नहीं है।`
+        : '⏳ यह प्रमाण पत्र/दान रसीद अभी संस्था एडमिन द्वारा अनुमोदन (Approval) के लिए प्रतीक्षारत है। स्वीकृति के बाद ही प्रिंट करें।';
+      setVerificationError(msg);
+      alert(msg);
+      return;
+    }
+
     setActiveExportItem(item);
     setVerificationError(null);
     const qrUrl = `https://jeevanjyotifoundation.org/?verify=${encodeURIComponent(item.id)}`;
@@ -1160,6 +1200,28 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
                   </div>
                 )}
 
+                {/* Targeted Certificate Link Banner */}
+                {targetCertId && (
+                  <div className="p-3.5 rounded-2xl bg-emerald-50 border-2 border-emerald-300 shadow-xs flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0" />
+                      <div className="text-xs sm:text-sm">
+                        <span className="font-black text-emerald-950">स्वीकृत प्रमाण पत्र लिंक प्राप्त: </span>
+                        <span className="font-bold text-emerald-800">
+                          प्रमाण पत्र संख्या <strong>{targetCertId}</strong> नीचे हाइलाइट किया गया है।
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setTargetCertId('')}
+                      className="text-xs font-bold text-emerald-700 hover:text-emerald-900 bg-white px-2 py-1 rounded-lg border border-emerald-200 cursor-pointer"
+                    >
+                      सभी देखें
+                    </button>
+                  </div>
+                )}
+
                 {/* Server Verification Error Alert */}
                 {verificationError && (
                   <div className="p-3.5 rounded-2xl bg-red-50 border-2 border-red-300 shadow-xs flex items-center justify-between gap-3">
@@ -1185,11 +1247,16 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
                       const badge = getTypeBadge(item.type);
                       const isDownloading = downloadingId?.startsWith(item.id);
                       const isVerifyingThis = isVerifyingCardId === item.id;
+                      const isTargeted = !!targetCertId && item.id.toLowerCase() === targetCertId.toLowerCase();
 
                       return (
                         <div
                           key={item.id}
-                          className="p-4 rounded-2xl bg-white border-2 border-amber-200/80 hover:border-amber-400 shadow-md hover:shadow-lg transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                          className={`p-4 rounded-2xl bg-white border-2 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${
+                            isTargeted
+                              ? 'border-emerald-500 shadow-xl ring-2 ring-emerald-400/50 bg-emerald-50/20'
+                              : 'border-amber-200/80 hover:border-amber-400 shadow-md hover:shadow-lg'
+                          }`}
                         >
                           {/* Left Details */}
                           <div className="flex items-start gap-3.5 flex-1 min-w-0">
@@ -1279,6 +1346,28 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
                                   <ShieldCheck className="w-3 h-3 text-emerald-600" />
                                   <span>{isVerifyingThis ? 'सत्यापित हो रहा है...' : 'फायरबेस QR सत्यापित ✓'}</span>
                                 </button>
+
+                                {/* Admin Approval Status Badge */}
+                                {item.type === 'festival_greeting' ? (
+                                  <span className="text-[10px] font-bold text-purple-800 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-200 flex items-center gap-1 shadow-2xs">
+                                    <span>त्योहार शुभकामना छूट ✓</span>
+                                  </span>
+                                ) : item.approvalStatus === 'approved' ? (
+                                  <span className="text-[10px] font-black text-emerald-900 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-400 flex items-center gap-1 shadow-2xs">
+                                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                    <span>एडमिन द्वारा स्वीकृत (Approved) ✓</span>
+                                  </span>
+                                ) : item.approvalStatus === 'rejected' ? (
+                                  <span className="text-[10px] font-black text-rose-900 bg-rose-100 px-2.5 py-0.5 rounded-full border border-rose-400 flex items-center gap-1 shadow-2xs" title={item.rejectionReason || 'अस्वीकृत'}>
+                                    <AlertCircle className="w-3 h-3 text-rose-600" />
+                                    <span>एडमिन द्वारा अस्वीकृत (Rejected)</span>
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-black text-amber-900 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-400 flex items-center gap-1 animate-pulse shadow-2xs">
+                                    <Clock className="w-3 h-3 text-amber-700" />
+                                    <span>एडमिन स्वीकृति प्रतीक्षारत (Pending Approval)</span>
+                                  </span>
+                                )}
                               </div>
 
                               <h4 className="text-sm sm:text-base font-black text-slate-900 truncate">
@@ -1303,71 +1392,126 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
 
                           {/* Right Action Buttons */}
                           <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full md:w-auto shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
-                            {/* 1. Preview / View Button */}
-                            <button
-                              type="button"
-                              onClick={() => handlePreview(item)}
-                              className="flex-1 sm:flex-none px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-xs shadow-2xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-slate-300"
-                              title="प्रमाण पत्र देखें व संपादन करें"
-                            >
-                              <Eye className="w-3.5 h-3.5 text-slate-700" />
-                              <span>देखें</span>
-                            </button>
+                            {/* Check if download is allowed */}
+                            {(() => {
+                              const isApproved = item.type === 'festival_greeting' || item.approvalStatus === 'approved';
+                              const isRejected = item.approvalStatus === 'rejected';
 
-                            {/* 2. Offline Edit / Sync Test Note Button */}
-                            <button
-                              type="button"
-                              onClick={() => handleOpenOfflineEditModal(item)}
-                              className="flex-1 sm:flex-none px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 rounded-xl font-bold text-xs shadow-2xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-amber-300"
-                              title="ऑफ़लाइन नोट या विवरण जोड़ें (IndexedDB Sync Test)"
-                            >
-                              <Edit3 className="w-3.5 h-3.5 text-amber-700" />
-                              <span>ऑफ़लाइन नोट</span>
-                            </button>
+                              return (
+                                <>
+                                  {/* 1. Preview / View Button */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handlePreview(item)}
+                                    className="flex-1 sm:flex-none px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-xs shadow-2xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-slate-300"
+                                    title="प्रमाण पत्र देखें"
+                                  >
+                                    <Eye className="w-3.5 h-3.5 text-slate-700" />
+                                    <span>देखें</span>
+                                  </button>
 
-                            {/* 3. Download JPG Button */}
-                            <button
-                              type="button"
-                              disabled={isDownloading}
-                              onClick={() => handleDirectDownload(item, 'jpg')}
-                              className="flex-1 sm:flex-none px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-black text-xs shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-                              title="सर्वर-साइड QR व डेटाबेस सत्यापन के बाद उच्च गुणवत्ता JPG इमेज डाउनलोड करें"
-                            >
-                              <Download className="w-3.5 h-3.5" />
-                              <span>{isDownloading && downloadingId?.endsWith('jpg') ? 'सत्यापन...' : 'JPG'}</span>
-                            </button>
+                                  {/* 2. Offline Edit / Sync Test Note Button */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenOfflineEditModal(item)}
+                                    className="flex-1 sm:flex-none px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 rounded-xl font-bold text-xs shadow-2xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-amber-300"
+                                    title="ऑफ़लाइन नोट या विवरण जोड़ें (IndexedDB Sync Test)"
+                                  >
+                                    <Edit3 className="w-3.5 h-3.5 text-amber-700" />
+                                    <span>नोट</span>
+                                  </button>
 
-                            {/* 4. Download PDF Button */}
-                            <button
-                              type="button"
-                              disabled={isDownloading}
-                              onClick={() => handleDirectDownload(item, 'pdf')}
-                              className="flex-1 sm:flex-none px-3 py-2 bg-[#8B0000] hover:bg-[#6b0000] text-white rounded-xl font-black text-xs shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-                              title="सर्वर-साइड QR व डेटाबेस सत्यापन के बाद A4 प्रिंटेबल PDF डाउनलोड करें"
-                            >
-                              <FileText className="w-3.5 h-3.5 text-yellow-300" />
-                              <span>{isDownloading && downloadingId?.endsWith('pdf') ? 'सत्यापन...' : 'PDF'}</span>
-                            </button>
+                                  {/* 3. Download JPG Button */}
+                                  <button
+                                    type="button"
+                                    disabled={isDownloading || !isApproved}
+                                    onClick={() => handleDirectDownload(item, 'jpg')}
+                                    className={`flex-1 sm:flex-none px-3 py-2 rounded-xl font-black text-xs shadow-xs transition-colors flex items-center justify-center gap-1.5 ${
+                                      !isApproved
+                                        ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed'
+                                        : 'bg-amber-600 hover:bg-amber-700 text-white cursor-pointer'
+                                    } disabled:opacity-75`}
+                                    title={
+                                      !isApproved
+                                        ? isRejected
+                                          ? 'एडमिन द्वारा अस्वीकृत - डाउनलोड अवरुद्ध'
+                                          : 'एडमिन स्वीकृति प्रतीक्षारत - एडमिन अनुमोदन के बाद ही डाउनलोड संभव'
+                                        : 'JPG इमेज डाउनलोड करें'
+                                    }
+                                  >
+                                    {!isApproved ? (
+                                      <Lock className="w-3.5 h-3.5 text-slate-400" />
+                                    ) : (
+                                      <Download className="w-3.5 h-3.5" />
+                                    )}
+                                    <span>
+                                      {isDownloading && downloadingId?.endsWith('jpg')
+                                        ? 'सत्यापन...'
+                                        : !isApproved
+                                        ? 'JPG (लॉक्ड)'
+                                        : 'JPG'}
+                                    </span>
+                                  </button>
 
-                            {/* 5. WhatsApp Share */}
-                            <button
-                              type="button"
-                              onClick={() => handleShareWhatsApp(item)}
-                              className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl transition-colors cursor-pointer"
-                              title="WhatsApp पर शेयर करें"
-                            >
-                              <Share2 className="w-4 h-4" />
-                            </button>
+                                  {/* 4. Download PDF Button */}
+                                  <button
+                                    type="button"
+                                    disabled={isDownloading || !isApproved}
+                                    onClick={() => handleDirectDownload(item, 'pdf')}
+                                    className={`flex-1 sm:flex-none px-3 py-2 rounded-xl font-black text-xs shadow-xs transition-colors flex items-center justify-center gap-1.5 ${
+                                      !isApproved
+                                        ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed'
+                                        : 'bg-[#8B0000] hover:bg-[#6b0000] text-white cursor-pointer'
+                                    } disabled:opacity-75`}
+                                    title={
+                                      !isApproved
+                                        ? isRejected
+                                          ? 'एडमिन द्वारा अस्वीकृत - डाउनलोड अवरुद्ध'
+                                          : 'एडमिन स्वीकृति प्रतीक्षारत - एडमिन अनुमोदन के बाद ही डाउनलोड संभव'
+                                        : 'A4 प्रिंटेबल PDF डाउनलोड करें'
+                                    }
+                                  >
+                                    {!isApproved ? (
+                                      <Lock className="w-3.5 h-3.5 text-slate-400" />
+                                    ) : (
+                                      <FileText className="w-3.5 h-3.5 text-yellow-300" />
+                                    )}
+                                    <span>
+                                      {isDownloading && downloadingId?.endsWith('pdf')
+                                        ? 'सत्यापन...'
+                                        : !isApproved
+                                        ? 'PDF (लॉक्ड)'
+                                        : 'PDF'}
+                                    </span>
+                                  </button>
 
-                            {/* 6. Print */}
-                            <button
-                              type="button"
-                              onClick={() => handleDirectPrint(item)}
-                              className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl transition-colors cursor-pointer"
-                              title="प्रिंट करें"
-                            >
-                              <Printer className="w-4 h-4" />
-                            </button>
+                                  {/* 5. WhatsApp Share */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleShareWhatsApp(item)}
+                                    className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl transition-colors cursor-pointer"
+                                    title="WhatsApp पर शेयर करें"
+                                  >
+                                    <Share2 className="w-4 h-4" />
+                                  </button>
+
+                                  {/* 6. Print */}
+                                  <button
+                                    type="button"
+                                    disabled={!isApproved}
+                                    onClick={() => handleDirectPrint(item)}
+                                    className={`p-2 rounded-xl transition-colors ${
+                                      !isApproved
+                                        ? 'bg-slate-100 text-slate-300 border border-slate-200 cursor-not-allowed'
+                                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 cursor-pointer'
+                                    }`}
+                                    title={!isApproved ? 'एडमिन स्वीकृति प्रतीक्षारत - प्रिंट अवरुद्ध' : 'प्रिंट करें'}
+                                  >
+                                    <Printer className="w-4 h-4" />
+                                  </button>
+                                </>
+                              );
+                            })()}
                           </div>
                         </div>
                       );
@@ -1539,34 +1683,49 @@ export const DownloadCertificatesModal: React.FC<DownloadCertificatesModalProps>
                 >
                   बंद करें
                 </button>
-                {inspectingVerification.matchedRecord && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const rec = inspectingVerification.matchedRecord;
-                        setInspectingVerification(null);
-                        handleDirectDownload(rec, 'jpg');
-                      }}
-                      className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>JPG डाउनलोड</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const rec = inspectingVerification.matchedRecord;
-                        setInspectingVerification(null);
-                        handleDirectDownload(rec, 'pdf');
-                      }}
-                      className="px-4 py-2 bg-[#8B0000] hover:bg-[#6b0000] text-white font-bold rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer"
-                    >
-                      <FileText className="w-3.5 h-3.5" />
-                      <span>PDF डाउनलोड</span>
-                    </button>
-                  </>
-                )}
+                {inspectingVerification.matchedRecord && (() => {
+                  const rec = inspectingVerification.matchedRecord;
+                  const isApproved = rec.type === 'festival_greeting' || rec.approvalStatus === 'approved';
+
+                  return (
+                    <>
+                      <button
+                        type="button"
+                        disabled={!isApproved}
+                        onClick={() => {
+                          setInspectingVerification(null);
+                          handleDirectDownload(rec, 'jpg');
+                        }}
+                        className={`px-4 py-2 font-bold rounded-xl flex items-center gap-1.5 shadow-xs ${
+                          !isApproved
+                            ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed'
+                            : 'bg-amber-600 hover:bg-amber-700 text-white cursor-pointer'
+                        }`}
+                        title={!isApproved ? 'एडमिन स्वीकृति प्रतीक्षारत - डाउनलोड अवरुद्ध' : 'JPG डाउनलोड'}
+                      >
+                        {!isApproved ? <Lock className="w-3.5 h-3.5 text-slate-400" /> : <Download className="w-3.5 h-3.5" />}
+                        <span>{isApproved ? 'JPG डाउनलोड' : 'JPG (लॉक्ड)'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!isApproved}
+                        onClick={() => {
+                          setInspectingVerification(null);
+                          handleDirectDownload(rec, 'pdf');
+                        }}
+                        className={`px-4 py-2 font-bold rounded-xl flex items-center gap-1.5 shadow-xs ${
+                          !isApproved
+                            ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed'
+                            : 'bg-[#8B0000] hover:bg-[#6b0000] text-white cursor-pointer'
+                        }`}
+                        title={!isApproved ? 'एडमिन स्वीकृति प्रतीक्षारत - डाउनलोड अवरुद्ध' : 'PDF डाउनलोड'}
+                      >
+                        {!isApproved ? <Lock className="w-3.5 h-3.5 text-slate-400" /> : <FileText className="w-3.5 h-3.5" />}
+                        <span>{isApproved ? 'PDF डाउनलोड' : 'PDF (लॉक्ड)'}</span>
+                      </button>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </div>

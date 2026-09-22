@@ -60,6 +60,7 @@ export const Donation80GPortal: React.FC<Props> = ({
   const [donationType, setDonationType] = useState<'one-time' | 'monthly'>('one-time');
   const [purpose, setPurpose] = useState<string>('Shiksha (शिक्षा सहयोग)');
   const [agreeDeclaration, setAgreeDeclaration] = useState<boolean>(true);
+  const [getUpdatesWhatsApp, setGetUpdatesWhatsApp] = useState<boolean>(true);
 
   // Payment Mode
   const [paymentTab, setPaymentTab] = useState<'upi' | 'razorpay' | 'bank'>('upi');
@@ -168,7 +169,8 @@ export const Donation80GPortal: React.FC<Props> = ({
       state: 'उत्तर प्रदेश (Uttar Pradesh)',
       pincode: pincode.trim() || '233001',
       amount: currentAmount,
-      purpose: purpose
+      purpose: purpose,
+      whatsappConsent: getUpdatesWhatsApp
     };
 
     setActivePaymentData(donorPaymentData);
@@ -544,7 +546,7 @@ export const Donation80GPortal: React.FC<Props> = ({
               </div>
 
               {/* Declaration Checkbox */}
-              <div className="pt-2 border-t border-gray-200">
+              <div className="pt-2 border-t border-gray-200 space-y-2.5">
                 <label className="flex items-start gap-2.5 text-xs text-gray-800 cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -555,6 +557,31 @@ export const Donation80GPortal: React.FC<Props> = ({
                   <span>
                     <strong>दान घोषणा (Declaration):</strong> "मैं पुष्टि करता/करती हूँ कि यह दान स्वेच्छा से जीवन ज्योति फाउंडेशन के जन-कल्याणकारी कार्यों हेतु दिया जा रहा है।"
                   </span>
+                </label>
+
+                {/* WhatsApp Updates Opt-in Checkbox */}
+                <label 
+                  id="donation-whatsapp-updates-consent"
+                  className="flex items-start gap-2.5 text-xs text-emerald-900 bg-emerald-50/80 p-2.5 rounded-xl border border-emerald-200 cursor-pointer select-none hover:bg-emerald-100/60 transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    id="checkbox-donation-whatsapp-optin"
+                    checked={getUpdatesWhatsApp}
+                    onChange={(e) => setGetUpdatesWhatsApp(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 text-emerald-600 rounded border-emerald-300 focus:ring-emerald-500"
+                  />
+                  <div>
+                    <span className="font-bold flex items-center gap-1.5 text-emerald-950">
+                      <span>💬 WhatsApp पर अपडेट्स प्राप्त करें (Get updates via WhatsApp)</span>
+                      <span className="text-[10px] bg-emerald-200 text-emerald-900 font-black px-1.5 py-0.2 rounded-full uppercase tracking-wider">
+                        Recommened
+                      </span>
+                    </span>
+                    <p className="text-[11px] text-emerald-700 mt-0.5 leading-snug">
+                      दान रसीद, अप्रूवल स्थिति एवं संस्था के सेवा प्रकल्पों की जानकारी सीधे अपने WhatsApp नंबर पर प्राप्त करने की सहमति दें।
+                    </p>
+                  </div>
                 </label>
               </div>
             </div>

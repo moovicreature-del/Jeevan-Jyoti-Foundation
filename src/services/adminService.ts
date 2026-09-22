@@ -61,30 +61,141 @@ function sanitizePaymentSettings(raw: any): DonationPaymentSettings {
 }
 
 // डिफ़ॉल्ट स्लाइडर फ़ोटो (Default Authentic Ghazipur Seva Action Photos)
+// सेक्शन 1: लाइव फ़ोटो स्लाइड्स (Section 1: Live Photo Slides)
 export const DEFAULT_SLIDER_PHOTOS: SliderPhotoItem[] = [
   {
-    id: 'slide-1',
+    id: 'hero-slide-1',
     url: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200&auto=format&fit=crop&q=85',
     title: 'निःशुल्क सांध्यकालीन शिक्षा सेवा',
     description: 'ग़ाज़ीपुर के ग्रामीण व वंचित बच्चों को समर्पित आधुनिक व संस्कारयुक्त शिक्षा अभियान'
   },
   {
-    id: 'slide-2',
+    id: 'hero-slide-2',
     url: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1200&auto=format&fit=crop&q=85',
     title: 'अन्नपूर्णा भोजन सेवा एवं पोषण किट वितरण',
     description: 'निराश्रितों, दैनिक मजदूरों एवं जरूरतमंद परिवारों को ताजा पौष्टिक भोजन व सूखा राशन'
   },
   {
-    id: 'slide-3',
+    id: 'hero-slide-3',
     url: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200&auto=format&fit=crop&q=85',
     title: 'निःशुल्क ग्रामीण स्वास्थ्य एवं नेत्र शिविर',
     description: 'वरिष्ठ डॉक्टरों द्वारा विशेषज्ञ चिकित्सीय परामर्श, चश्मा व जीवनरक्षक दवा वितरण'
   },
   {
-    id: 'slide-4',
+    id: 'hero-slide-4',
     url: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=1200&auto=format&fit=crop&q=85',
     title: 'पर्यावरण संरक्षण एवं वृहद पौधरोपण महाभियान',
     description: 'हरित ग़ाज़ीपुर संकल्प: 1000+ फलदार व औषधीय पौधों का रोपण व संरक्षण'
+  }
+];
+
+// सेक्शन 2: ग़ाज़ीपुर सेवा अभियानों की लाइव फ़ोटो गैलरी (Section 2: Campaign Live Gallery)
+export const DEFAULT_CAMPAIGN_GALLERY_PHOTOS: SliderPhotoItem[] = [
+  {
+    id: 'camp-slide-1',
+    url: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=1200&auto=format&fit=crop&q=85',
+    title: 'शीतकालीन वस्त्र एवं कंबल वितरण अभियान',
+    description: 'ठंड से बचाव हेतु सुदूर गांवों में 500+ वृद्धों व बच्चों को गर्म वस्त्र व कंबल भेंट'
+  },
+  {
+    id: 'camp-slide-2',
+    url: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1200&auto=format&fit=crop&q=85',
+    title: 'सांध्यकालीन बाल संस्कार एवं अध्ययन केंद्र',
+    description: 'शिक्षा से वंचित नौनिहालों को क, ख, ग से लेकर डिजिटल साक्षरता की रोशनी'
+  },
+  {
+    id: 'camp-slide-3',
+    url: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=1200&auto=format&fit=crop&q=85',
+    title: 'मोबाइल मेडिकल वैन एवं प्राथमिक उपचार सेवा',
+    description: 'गांव-गांव पहुंचकर ब्लड प्रेशर, शुगर व सामान्य बीमारियों की मुफ्त जांच'
+  },
+  {
+    id: 'camp-slide-4',
+    url: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=1200&auto=format&fit=crop&q=85',
+    title: 'महिला स्वावलंबन एवं कौशल विकास कार्यशाला',
+    description: 'ग्रामीण बहनों को सिलाई, हस्तकला व आत्मनिर्भरता का निःशुल्क प्रशिक्षण'
+  },
+  {
+    id: 'camp-slide-5',
+    url: 'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=1200&auto=format&fit=crop&q=85',
+    title: 'स्वच्छ गंगा व जल संरक्षण जन-जागरूकता',
+    description: 'घाटों की सफाई एवं स्वच्छ पेयजल संरक्षण हेतु स्वयंसेवकों का साप्ताहिक श्रमदान'
+  }
+];
+
+// सेक्शन 3: हाल ही में आयोजित सेवा कार्यक्रम (Section 3: Recent Events Photos)
+export const DEFAULT_RECENT_EVENTS_PHOTOS: SliderPhotoItem[] = [
+  {
+    id: 'event-slide-1',
+    url: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200&auto=format&fit=crop&q=85',
+    title: 'सांध्यकालीन पाठशाला एवं डिजिटल शिक्षण सामग्री वितरण',
+    description: 'मीरानपुर ग्राम में 150 से अधिक निर्धन बच्चों को स्कूल बैग, पाठ्य सामग्री एवं डिजिटल टेबलेट द्वारा आधुनिक बुनियादी शिक्षा प्रदान की गई।',
+    category: 'शिक्षा सेवा',
+    location: 'मीरानपुर, मोहम्मदाबाद',
+    date: '2026-03-24'
+  },
+  {
+    id: 'event-slide-2',
+    url: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200&auto=format&fit=crop&q=85',
+    title: 'ग्रामीण समग्र नेत्र जांच एवं निःशुल्क दवा वितरण शिविर',
+    description: 'वरिष्ठ नेत्र विशेषज्ञों द्वारा 200+ ग्रामीण बुजुर्गों की निशुल्क जांच कर चश्मे व आवश्यक दवाइयां वितरित की गईं।',
+    category: 'स्वास्थ्य रक्षा',
+    location: 'जमानियां ब्लॉक, ग़ाज़ीपुर',
+    date: '2026-03-12'
+  },
+  {
+    id: 'event-slide-3',
+    url: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1200&auto=format&fit=crop&q=85',
+    title: 'अन्नपूर्णा साप्ताहिक पोषण आहार वितरण अभियान',
+    description: 'ग़ाज़ीपुर गंगा घाट एवं रेलवे स्टेशन के समीप रहने वाले 400+ दैनिक श्रमिकों व असहायों को पौष्टिक गर्म भोजन वितरित किया गया।',
+    category: 'अन्नपूर्णा सेवा',
+    location: 'ग़ाज़ीपुर सदर',
+    date: '2026-03-02'
+  },
+  {
+    id: 'event-slide-4',
+    url: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=1200&auto=format&fit=crop&q=85',
+    title: 'पर्यावरण संरक्षण एवं 1000+ फलदार पौधरोपण अभियान',
+    description: 'गाजीपुर के विभिन्न ग्रामों और सार्वजनिक परिसरों में हरियाली एवं छायादार वृक्षारोपण संपन्न हुआ।',
+    category: 'पर्यावरण संरक्षण',
+    location: 'रेवतीपुर व सैदपुर अंचल',
+    date: '2026-02-20'
+  }
+];
+
+// सेक्शन 4: ग़ाज़ीपुर के ग्रामीण अंचलों में जीवन ज्योति का कार्य (Section 4: Rural Impact Field Work)
+export const DEFAULT_RURAL_WORK_PHOTOS: SliderPhotoItem[] = [
+  {
+    id: 'rural-slide-1',
+    url: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1200&auto=format&fit=crop&q=85',
+    title: 'सुदूर पुरवों में जरूरतमंद परिवारों तक सीधी सहायता',
+    description: 'रेवतीपुर एवं भांवरकोल के बाढ़ प्रभावित क्षेत्रों में राशन सामग्री व स्वच्छ पेयजल का घर-घर वितरण',
+    category: 'राहत कार्य',
+    location: 'भांवरकोल एवं रेवतीपुर'
+  },
+  {
+    id: 'rural-slide-2',
+    url: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200&auto=format&fit=crop&q=85',
+    title: 'झोपड़पट्टी व मजरों में बुनियादी अक्षर ज्ञान की ज्योति',
+    description: 'ईंट भट्ठों व मजदूरी करने वाले परिवारों के बच्चों को प्रतिदिन 2 घंटे नियमित शिक्षण',
+    category: 'बाल शिक्षा',
+    location: 'करंडा एवं सैदपुर'
+  },
+  {
+    id: 'rural-slide-3',
+    url: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200&auto=format&fit=crop&q=85',
+    title: 'अशक्त व वृद्ध ग्रामीणों को घर पर स्वास्थ्य जांच व दवा',
+    description: 'अस्पताल जाने में असमर्थ वृद्धजनों के लिए चलंत स्वास्थ्य टीम द्वारा नियमित फॉलो-अप',
+    category: 'स्वास्थ्य सेवा',
+    location: 'कासिमाबाद एवं जहूराबाद'
+  },
+  {
+    id: 'rural-slide-4',
+    url: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=1200&auto=format&fit=crop&q=85',
+    title: 'ग्रामीण कन्याओं को स्वावलंबन एवं डिजिटल ज्ञान',
+    description: 'सिलाई-कढ़ाई केंद्र तथा कंप्यूटर साक्षरता द्वारा बेटियों को आत्मनिर्भर बनाने का सशक्त प्रयास',
+    category: 'महिला सशक्तीकरण',
+    location: 'बिरनो एवं मरदह'
   }
 ];
 
@@ -98,9 +209,13 @@ export const DEFAULT_HOME_CONTENT: AppHomeContent = {
   bannerImageUrl: DEFAULT_SLIDER_PHOTOS[0].url,
   bannerImages: DEFAULT_SLIDER_PHOTOS.map((p) => p.url),
   sliderPhotos: DEFAULT_SLIDER_PHOTOS,
+  campaignGalleryPhotos: DEFAULT_CAMPAIGN_GALLERY_PHOTOS,
+  recentEventsPhotos: DEFAULT_RECENT_EVENTS_PHOTOS,
+  ruralWorkPhotos: DEFAULT_RURAL_WORK_PHOTOS,
   sliderAutoPlay: true,
   sliderInterval: 4,
   bannerVideoUrl: 'https://www.youtube.com/watch?v=0kF5s7J_C3A',
+  ruralWorkVideoUrl: 'https://www.youtube.com/watch?v=0kF5s7J_C3A',
   bannerTitle: 'सशक्त ग़ाज़ीपुर, समृद्ध समाज',
   bannerSubtitle: 'हमारे सेवा अभियानों से जुड़ें और समाज निर्माण में अपना योगदान दें',
   appLogoUrl: '',
@@ -238,41 +353,35 @@ function sanitizeContentData(raw: any): AppHomeContent {
     }
   }
 
-  // 2. Process slider photos & multiple banner images
-  if (Array.isArray(raw?.sliderPhotos) && raw.sliderPhotos.length > 0) {
-    const validSlides: SliderPhotoItem[] = raw.sliderPhotos.filter(
-      (item: any) => item && typeof item.url === 'string' && item.url.trim().length > 0
-    );
-    merged.sliderPhotos = validSlides.length > 0 ? validSlides : DEFAULT_SLIDER_PHOTOS;
-    merged.bannerImages = merged.sliderPhotos.map((p) => p.url);
-    if (merged.sliderPhotos.length > 0) {
-      merged.bannerImageUrl = merged.sliderPhotos[0].url;
+  // 2. Process Section 1: sliderPhotos (up to 15)
+  const sanitizePhotoList = (input: any, defaultList: SliderPhotoItem[]): SliderPhotoItem[] => {
+    if (!Array.isArray(input) || input.length === 0) {
+      return defaultList;
     }
-  } else if (Array.isArray(raw?.bannerImages) && raw.bannerImages.length > 0) {
-    const validImages = raw.bannerImages.filter((img: any) => typeof img === 'string' && img.trim().length > 0);
-    merged.bannerImages = validImages;
-    merged.sliderPhotos = validImages.map((url: string, index: number) => ({
-      id: `slide-${index + 1}`,
-      url,
-      title: `संस्था सेवा गतिविधि चित्र ${index + 1}`,
-      description: 'जीवन ज्योति फाउंडेशन गाजीपुर'
-    }));
-    if (validImages.length > 0) {
-      merged.bannerImageUrl = validImages[0];
-    }
-  } else if (raw?.bannerImageUrl && typeof raw.bannerImageUrl === 'string' && raw.bannerImageUrl.trim().length > 0) {
-    merged.bannerImageUrl = raw.bannerImageUrl;
-    merged.bannerImages = [raw.bannerImageUrl];
-    merged.sliderPhotos = [{
-      id: 'slide-1',
-      url: raw.bannerImageUrl,
-      title: raw.bannerTitle || 'संस्था सेवा गतिविधि',
-      description: raw.bannerSubtitle || 'जीवन ज्योति फाउंडेशन'
-    }];
-  } else {
-    merged.sliderPhotos = DEFAULT_SLIDER_PHOTOS;
-    merged.bannerImages = DEFAULT_SLIDER_PHOTOS.map((p) => p.url);
-    merged.bannerImageUrl = DEFAULT_SLIDER_PHOTOS[0].url;
+    const valid = input
+      .filter((item: any) => item && typeof item.url === 'string' && item.url.trim().length > 0)
+      .slice(0, 15) // Limit strictly to 15 photos per section
+      .map((item: any, idx: number) => ({
+        id: item.id || `photo-${Date.now()}-${idx}`,
+        url: item.url.trim(),
+        title: item.title || '',
+        description: item.description || '',
+        category: item.category || '',
+        location: item.location || '',
+        date: item.date || '',
+        createdAt: item.createdAt || new Date().toISOString()
+      }));
+    return valid.length > 0 ? valid : defaultList;
+  };
+
+  merged.sliderPhotos = sanitizePhotoList(raw?.sliderPhotos, DEFAULT_SLIDER_PHOTOS);
+  merged.campaignGalleryPhotos = sanitizePhotoList(raw?.campaignGalleryPhotos, DEFAULT_CAMPAIGN_GALLERY_PHOTOS);
+  merged.recentEventsPhotos = sanitizePhotoList(raw?.recentEventsPhotos, DEFAULT_RECENT_EVENTS_PHOTOS);
+  merged.ruralWorkPhotos = sanitizePhotoList(raw?.ruralWorkPhotos, DEFAULT_RURAL_WORK_PHOTOS);
+
+  merged.bannerImages = merged.sliderPhotos.map((p) => p.url);
+  if (merged.sliderPhotos.length > 0) {
+    merged.bannerImageUrl = merged.sliderPhotos[0].url;
   }
 
   // Slider intervals & autoplay
@@ -280,6 +389,13 @@ function sanitizeContentData(raw: any): AppHomeContent {
   merged.sliderInterval = typeof raw?.sliderInterval === 'number' && raw.sliderInterval >= 2 && raw.sliderInterval <= 30
     ? raw.sliderInterval
     : 4;
+
+  // Video URL handling (sync ruralWorkVideoUrl and bannerVideoUrl)
+  const resolvedVideo = (typeof raw?.ruralWorkVideoUrl === 'string' && raw.ruralWorkVideoUrl.trim())
+    || (typeof raw?.bannerVideoUrl === 'string' && raw.bannerVideoUrl.trim())
+    || DEFAULT_HOME_CONTENT.bannerVideoUrl;
+  merged.bannerVideoUrl = resolvedVideo;
+  merged.ruralWorkVideoUrl = resolvedVideo;
 
   return merged;
 }
@@ -1273,9 +1389,13 @@ export async function saveHomeContent(
     bannerImageUrl: content.bannerImageUrl || '',
     bannerImages: content.bannerImages,
     sliderPhotos: content.sliderPhotos,
+    campaignGalleryPhotos: content.campaignGalleryPhotos,
+    recentEventsPhotos: content.recentEventsPhotos,
+    ruralWorkPhotos: content.ruralWorkPhotos,
     sliderAutoPlay: content.sliderAutoPlay,
     sliderInterval: content.sliderInterval,
-    bannerVideoUrl: content.bannerVideoUrl || DEFAULT_HOME_CONTENT.bannerVideoUrl,
+    bannerVideoUrl: content.ruralWorkVideoUrl || content.bannerVideoUrl || DEFAULT_HOME_CONTENT.bannerVideoUrl,
+    ruralWorkVideoUrl: content.ruralWorkVideoUrl || content.bannerVideoUrl || DEFAULT_HOME_CONTENT.bannerVideoUrl,
     bannerTitle: content.bannerTitle || DEFAULT_HOME_CONTENT.bannerTitle,
     bannerSubtitle: content.bannerSubtitle || DEFAULT_HOME_CONTENT.bannerSubtitle,
     appLogoUrl: preservedLogo,

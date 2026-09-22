@@ -207,7 +207,7 @@ export const StaffIdCard: React.FC<StaffIdCardProps> = ({
           <div className="bg-amber-50/90 rounded-xl p-2 border border-amber-300/80 shadow-2xs">
             <div className="text-[9.5px] font-black text-[#8B0000] uppercase tracking-wider mb-1 flex items-center justify-between border-b border-amber-200 pb-0.5">
               <span>🏛️ {language === 'en' ? 'NGO Statutory Registrations' : 'संस्था के वैधानिक पंजीकरण विवरण'}</span>
-              <span className="text-[8px] text-gray-500 font-mono">12A & 80G Compliant</span>
+              <span className="text-[8px] text-gray-500 font-mono">12A Registered NGO</span>
             </div>
             <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[9px]">
               <div>

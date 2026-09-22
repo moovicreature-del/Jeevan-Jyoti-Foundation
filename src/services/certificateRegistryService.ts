@@ -402,6 +402,52 @@ export function getCertificateApprovalWhatsAppUrl(cert: RegisteredCertificateIte
 }
 
 /**
+ * Dispatch automated SMS and prepare WhatsApp notification for approved certificate
+ */
+export async function dispatchCertificateApprovalNotifications(cert: RegisteredCertificateItem): Promise<{
+  smsSent: boolean;
+  smsMessage: string;
+  whatsappUrl: string;
+}> {
+  const cleanPhone = normalizePhoneNumber(cert.phone) || '8052361666';
+  const downloadUrl = getCertificateDownloadUrl(cert.id, cleanPhone);
+  const whatsappUrl = getCertificateApprovalWhatsAppUrl(cert);
+
+  let smsSent = false;
+  let smsMessage = `पंजीकृत मोबाइल (+91 ${cleanPhone}) पर SMS व WhatsApp डाउनलोड लिंक तैयार`;
+
+  try {
+    const res = await fetch('/api/send-approval-sms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: cleanPhone,
+        recipientName: cert.recipientName,
+        certificateId: cert.id,
+        titleHindi: cert.titleHindi,
+        downloadUrl
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      smsSent = !!data.success;
+      if (data.message) {
+        smsMessage = data.message;
+      }
+    }
+  } catch (err) {
+    console.debug('Approval SMS dispatch note:', err);
+  }
+
+  return {
+    smsSent,
+    smsMessage,
+    whatsappUrl
+  };
+}
+
+/**
  * Async helper to store certificate in Firestore Database
  */
 async function saveCertificateToFirestore(item: RegisteredCertificateItem): Promise<void> {

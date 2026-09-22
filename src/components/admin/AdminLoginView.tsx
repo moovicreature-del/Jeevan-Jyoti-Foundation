@@ -112,21 +112,21 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({ onSuccess, onCan
   };
 
   // क्विक रोल टॉगल
+  // Role Selector (without pre-filling phone numbers)
   const handleSelectRolePreset = (type: 'superadmin' | 'admin') => {
     setActivePortalType(type);
     if (type === 'superadmin') {
-      setPhone(SUPER_ADMIN_PHONE);
       setRegRole('superadmin');
     } else {
-      setPhone(ADMIN_PHONE);
       setRegRole('admin');
     }
   };
 
-  // 1. फ़ोन नंबर पर OTP भेजें
+  // 1. फ़ोन नंबर पर वास्तविक OTP भेजें (SMS व WhatsApp)
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone || phone.length < 10) {
+    const cleanPhone = phone.replace(/\D/g, '').slice(-10);
+    if (cleanPhone.length !== 10) {
       toast.error('कृपया 10-अंकों का वैध मोबाइल नंबर दर्ज करें!');
       return;
     }
@@ -134,16 +134,9 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({ onSuccess, onCan
     setIsSubmitting(true);
 
     try {
-      if (recaptchaVerifier) {
-        const success = await sendOtp(phone, recaptchaVerifier);
-        if (success) {
-          setRegMobile(phone);
-          setStep('otp');
-        }
-      } else {
-        // Fallback test mode
-        toast.success(`परीक्षण OTP कोड 123456 मोबाइल ${phone} पर भेजा गया!`);
-        setRegMobile(phone);
+      const success = await sendOtp(cleanPhone, recaptchaVerifier);
+      if (success) {
+        setRegMobile(cleanPhone);
         setStep('otp');
       }
     } catch {
@@ -153,10 +146,11 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({ onSuccess, onCan
     }
   };
 
-  // 2. OTP सत्यापित करें
+  // 2. OTP सत्यापित करें (केवल वास्तविक OTP द्वारा सत्यापन)
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otp || otp.length < 6) {
+    const cleanOtp = otp.replace(/\D/g, '').trim();
+    if (cleanOtp.length < 6) {
       toast.error('कृपया 6-अंकों का OTP दर्ज करें!');
       return;
     }
@@ -164,32 +158,7 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({ onSuccess, onCan
     setIsSubmitting(true);
 
     try {
-      // Test code shortcut for quick testing
-      if (otp === '123456' || otp === '786786') {
-        const isSuper = phone.includes(SUPER_ADMIN_PHONE) || phone.includes('9876543210') || phone.includes('8888888888');
-        const isAdmin = phone.includes(ADMIN_PHONE);
-
-        if (isSuper) {
-          await loginAsDemoSuperAdmin();
-          if (onSuccess) onSuccess();
-          return;
-        } else if (isAdmin) {
-          await loginAsDemoAdmin();
-          if (onSuccess) onSuccess();
-          return;
-        } else {
-          await submitRegistration({
-            name: 'अधिकृत एडमिन',
-            mobile: phone,
-            email: 'admin@jeevanjyotifoundation.org',
-            role: 'admin'
-          });
-          if (onSuccess) onSuccess();
-          return;
-        }
-      }
-
-      const result = await verifyOtpAndLogin(otp);
+      const result = await verifyOtpAndLogin(cleanOtp);
       if (result.success) {
         if (result.isNewUser) {
           setRegMobile(phone);
@@ -404,50 +373,6 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({ onSuccess, onCan
               )}
             </button>
 
-            {/* Quick 1-Click Access for Evaluation */}
-            <div className="pt-3 border-t border-slate-100 space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  त्वरित 1-क्लिक सीधा प्रवेश (Quick 1-Click Login)
-                </span>
-                <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">
-                  फिक्स नंबर एक्सेस
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await loginAsDemoSuperAdmin();
-                    if (onSuccess) onSuccess();
-                  }}
-                  className="w-full py-2.5 px-3 bg-amber-50 hover:bg-amber-100 text-blue-950 border border-amber-300 font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition cursor-pointer shadow-sm text-left"
-                >
-                  <Crown className="w-4 h-4 text-amber-600 shrink-0" />
-                  <div>
-                    <span className="block leading-tight font-black text-amber-950">Super Admin</span>
-                    <span className="text-[10px] text-slate-600 block">8052361666 (श्री शैलेश प्रधान)</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await loginAsDemoAdmin();
-                    if (onSuccess) onSuccess();
-                  }}
-                  className="w-full py-2.5 px-3 bg-blue-50 hover:bg-blue-100 text-blue-950 border border-blue-200 font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition cursor-pointer shadow-sm text-left"
-                >
-                  <ShieldCheck className="w-4 h-4 text-blue-700 shrink-0" />
-                  <div>
-                    <span className="block leading-tight font-black text-blue-950">Admin Login</span>
-                    <span className="text-[10px] text-slate-600 block">8948165666 (व्यवस्थापक)</span>
-                  </div>
-                </button>
-              </div>
-            </div>
-
             {/* Direct CTA: Create New Admin Credentials */}
             <div className="pt-2 border-t border-slate-100">
               <button
@@ -479,57 +404,13 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({ onSuccess, onCan
         {/* ================= METHOD 2: MOBILE OTP LOGIN ================= */}
         {authMode === 'phone' && step === 'phone' && (
           <form onSubmit={handleSendOtp} className="space-y-5" autoComplete="off">
-            {/* Quick Role Switcher Buttons */}
-            <div className="space-y-1.5">
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">
-                नंबर चुनें (Select Preset Number)
-              </label>
-              <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-2xl">
-                <button
-                  type="button"
-                  onClick={() => handleSelectRolePreset('superadmin')}
-                  className={`py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
-                    activePortalType === 'superadmin' && phone === SUPER_ADMIN_PHONE
-                      ? 'bg-amber-400 text-blue-950 shadow-md ring-2 ring-amber-300'
-                      : 'text-slate-700 hover:bg-white/60'
-                  }`}
-                >
-                  <Crown className="w-4 h-4 text-amber-700" />
-                  <div className="text-left">
-                    <span className="block leading-tight">Super Admin</span>
-                    <span className="text-[10px] block opacity-80 font-mono">8052361666</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleSelectRolePreset('admin')}
-                  className={`py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
-                    activePortalType === 'admin' && phone === ADMIN_PHONE
-                      ? 'bg-blue-800 text-white shadow-md ring-2 ring-blue-700'
-                      : 'text-slate-700 hover:bg-white/60'
-                  }`}
-                >
-                  <ShieldCheck className="w-4 h-4 text-blue-300" />
-                  <div className="text-left">
-                    <span className="block leading-tight">Admin Portal</span>
-                    <span className="text-[10px] block opacity-80 font-mono">8948165666</span>
-                  </div>
-                </button>
-              </div>
-            </div>
-
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-bold text-slate-700">
-                  मोबाइल नंबर (Mobile Number)
+                  पंजीकृत मोबाइल नंबर (Manual Enter Mobile Number) *
                 </label>
                 <span className="text-[10px] font-bold text-blue-800">
-                  {phone === SUPER_ADMIN_PHONE
-                    ? '👑 सुपर एडमिन (श्री शैलेश प्रधान जी)'
-                    : phone === ADMIN_PHONE
-                    ? '🛡️ एडमिन (व्यवस्थापक)'
-                    : '10 अंकों का नंबर'}
+                  10-अंकीय मोबाइल नंबर
                 </span>
               </div>
               <div className="relative">
@@ -551,11 +432,14 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({ onSuccess, onCan
                     else if (val === ADMIN_PHONE) setActivePortalType('admin');
                     else setActivePortalType('custom');
                   }}
-                  placeholder="मोबाइल नंबर दर्ज करें"
-                  className="w-full pl-22 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-700 transition"
+                  placeholder="अपना 10-अंकीय मोबाइल नंबर दर्ज करें"
+                  className="w-full pl-22 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-700 transition font-mono"
                   required
                 />
               </div>
+              <p className="text-[10px] text-slate-500 mt-1">
+                सुरक्षा हेतु आपके मोबाइल व WhatsApp पर वास्तविक OTP कोड भेजा जाएगा।
+              </p>
             </div>
 
             <button
@@ -570,7 +454,7 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({ onSuccess, onCan
                 </>
               ) : (
                 <>
-                  <span>OTP कोड प्राप्त करें {phone ? `(+91 ${phone})` : ''}</span>
+                  <span>OTP कोड प्राप्त करें (SMS / WhatsApp)</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -589,29 +473,26 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({ onSuccess, onCan
                 OTP कोड सत्यापित करें
               </h3>
               <p className="text-xs text-slate-500">
-                मोबाइल <span className="font-bold text-blue-900">+91 {phone}</span> पर भेजा गया 6-अंकों का कोड दर्ज करें
+                मोबाइल <span className="font-bold text-blue-900">+91 {phone}</span> पर भेजा गया 6-अंकों का लाइव कोड दर्ज करें
               </p>
-              <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-900">
-                {phone === SUPER_ADMIN_PHONE ? '👑 सुपर एडमिन रोल' : phone === ADMIN_PHONE ? '🛡️ एडमिन रोल' : 'पोर्टल सत्यापन'}
-              </span>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                6-अंकों का OTP कोड
+                6-अंकीय OTP कोड
               </label>
               <input
                 type="text"
                 maxLength={6}
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                placeholder="123456"
-                className="w-full text-center tracking-[0.4em] py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xl font-black text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-700 transition"
+                placeholder="• • • • • •"
+                className="w-full text-center tracking-[0.4em] py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xl font-black text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-700 transition font-mono"
                 required
                 autoFocus
               />
-              <p className="text-[11px] text-slate-400 mt-1.5 text-center">
-                (डेवलपमेंट टेस्ट कोड: <span className="font-bold text-blue-800">123456</span>)
+              <p className="text-[11px] text-slate-500 mt-1.5 text-center">
+                OTP आपके मोबाइल SMS तथा WhatsApp पर भेजा गया है
               </p>
             </div>
 
@@ -735,7 +616,7 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({ onSuccess, onCan
                   />
                   <ShieldCheck className="w-5 h-5 text-blue-700 mb-1" />
                   <span className="font-bold text-xs">Admin (एडमिन)</span>
-                  <span className="text-[10px] text-slate-500">8948165666</span>
+                  <span className="text-[10px] text-slate-500">प्रशासनिक व्यवस्थापक</span>
                 </label>
 
                 <label
@@ -755,7 +636,7 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({ onSuccess, onCan
                   />
                   <Crown className="w-5 h-5 text-amber-600 mb-1" />
                   <span className="font-bold text-xs">Super Admin</span>
-                  <span className="text-[10px] text-slate-500">8052361666</span>
+                  <span className="text-[10px] text-slate-500">मुख्य प्रशासक</span>
                 </label>
               </div>
             </div>
@@ -790,34 +671,24 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({ onSuccess, onCan
               अनुमोदन प्रतीक्षारत (Approval Pending)
             </h3>
             <p className="text-xs text-slate-600 max-w-sm mx-auto leading-relaxed">
-              नमस्ते <span className="font-bold text-blue-950">{adminProfile?.name || 'एडमिन साथी'}</span>! आपका खाता सफलतापूर्वक पंजीकृत हो गया है। सुरक्षा कारणों से सुपर एडमिन द्वारा अनुमोदन (Approval) के पश्चात आप डैशबोर्ड एक्सेस कर सकेंगे।
+              नमस्ते <span className="font-bold text-blue-950">{adminProfile?.name || 'एडमिन साथी'}</span>! आपका खाता सफलतापूर्वक पंजीकृत हो गया है। सुरक्षा कारणों से मुख्य सुपर एडमिन द्वारा अनुमोदन (Approval) के पश्चात आप डैशबोर्ड एक्सेस कर सकेंगे।
             </p>
 
             <div className="p-4 bg-blue-50 rounded-2xl border border-blue-200 text-xs text-blue-900 text-left space-y-1.5">
               <div className="font-bold flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-blue-700" />
-                <span>फाउंडेशन मुख्य प्रशासनिक संपर्क:</span>
+                <span>फाउंडेशन प्रशासनिक सुरक्षा सूचना:</span>
               </div>
               <p className="text-[11px] text-slate-700">
-                मुख्य सुपर एडमिन: <strong>श्री शैलेश प्रधान जी</strong> | मो: <strong className="text-blue-900 font-mono">+91 8052361666</strong>
-              </p>
-              <p className="text-[11px] text-slate-700">
-                व्यवस्थापक / एडमिन: <strong>अधिकृत एडमिन</strong> | मो: <strong className="text-blue-900 font-mono">+91 8948165666</strong>
+                खाते की पुष्टि सुपर एडमिन की अनुमति के बाद स्वतः सक्रिय हो जाएगी।
               </p>
             </div>
 
             <div className="pt-2 flex flex-col gap-2">
-              <button
-                onClick={loginAsDemoSuperAdmin}
-                className="w-full py-2.5 bg-amber-400 hover:bg-amber-500 text-blue-950 font-black text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5"
-              >
-                <Crown className="w-4 h-4 text-amber-900" />
-                <span>सुपर एडमिन (8052361666) के रूप में लॉगिन करें</span>
-              </button>
               {onCancel && (
                 <button
                   onClick={onCancel}
-                  className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer"
+                  className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer"
                 >
                   होम पेज पर वापस लौटें
                 </button>

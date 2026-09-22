@@ -51,7 +51,7 @@ export const TabDonationPaymentSettings: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [previewAmount, setPreviewAmount] = useState<number>(2100);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [previewTab, setPreviewTab] = useState<'quick_donate' | 'bank_80g'>('quick_donate');
+  const [previewTab, setPreviewTab] = useState<'quick_donate' | 'bank_details'>('quick_donate');
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
 
   const UPI_SUFFIX_CHIPS = ['@sbi', '@okaxis', '@paytm', '@ybl', '@icici', '@ibl', '@axl', '@postbank', '@kotak', '@barodampay'];
@@ -809,9 +809,9 @@ export const TabDonationPaymentSettings: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setPreviewTab('bank_80g')}
+                  onClick={() => setPreviewTab('bank_details')}
                   className={`px-2.5 py-1 rounded-lg text-[10px] font-black transition cursor-pointer ${
-                    previewTab === 'bank_80g'
+                    previewTab === 'bank_details'
                       ? 'bg-blue-600 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}

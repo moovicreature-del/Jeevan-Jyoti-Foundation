@@ -17,6 +17,7 @@ import { VerifyPage } from './components/VerifyPage';
 import { Footer } from './components/Footer';
 import { HomeNoticeBanner } from './components/HomeNoticeBanner';
 import { HomePhotoSlider } from './components/HomePhotoSlider';
+import { CampaignGallerySlider } from './components/CampaignGallerySlider';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 // Utilities and Floating tools
@@ -71,6 +72,8 @@ export function App() {
   const [showQrScannerModal, setShowQrScannerModal] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [showDownloadCertificatesModal, setShowDownloadCertificatesModal] = useState(false);
+  const [downloadCertInitialPhone, setDownloadCertInitialPhone] = useState<string>('');
+  const [downloadCertInitialId, setDownloadCertInitialId] = useState<string>('');
   const [showGoogleDriveModal, setShowGoogleDriveModal] = useState(false);
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [staffModalTab, setStaffModalTab] = useState<'options' | 'registration' | 'download'>('options');
@@ -114,6 +117,23 @@ export function App() {
         urlParams.get('receipt_no');
       if (verifyParam) {
         setVerifyRouteId(verifyParam);
+      }
+
+      // Check for direct download link (e.g. from approval SMS or WhatsApp)
+      const downloadCertParam =
+        urlParams.get('downloadCert') ||
+        urlParams.get('download_cert') ||
+        urlParams.get('download');
+      const phoneParam = urlParams.get('phone') || urlParams.get('mobile');
+
+      if (downloadCertParam || (phoneParam && urlParams.get('action') === 'download')) {
+        if (phoneParam) {
+          setDownloadCertInitialPhone(phoneParam);
+        }
+        if (downloadCertParam) {
+          setDownloadCertInitialId(downloadCertParam);
+        }
+        setShowDownloadCertificatesModal(true);
       }
 
       const staffParam =
@@ -244,7 +264,7 @@ export function App() {
             </div>
 
             {/* Main Interactive Clear Slideshow */}
-            <HomePhotoSlider onOpenAdmin={() => setShowAdminLoginModal(true)} />
+            <CampaignGallerySlider onOpenAdmin={() => setShowAdminLoginModal(true)} />
           </div>
         </section>
 
@@ -287,10 +307,10 @@ export function App() {
         />
 
         {/* Recent Field Events & Ground News */}
-        <RecentEventsCarousel />
+        <RecentEventsCarousel onOpenAdmin={() => setShowAdminLoginModal(true)} />
 
-        {/* Documentary Video Showcase */}
-        <VideoShowcase />
+        {/* Documentary Video & Rural Work Photo Showcase */}
+        <VideoShowcase onOpenAdmin={() => setShowAdminLoginModal(true)} />
 
         {/* Donors Wall of Fame */}
         <DonationWallOfFame
@@ -491,6 +511,8 @@ export function App() {
                 setShowDownloadCertificatesModal(false);
                 setSelectedFestivalGreeting(fest);
               }}
+              initialPhone={downloadCertInitialPhone}
+              initialCertId={downloadCertInitialId}
             />
           )}
 

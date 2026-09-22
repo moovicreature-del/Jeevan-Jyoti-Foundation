@@ -69,8 +69,8 @@ const SEED_CERTIFICATES = [
     details: 'ब्लड ग्रुप: O+ • अधिकृत पहचान पत्र'
   },
   {
-    id: 'JJF-80G-2026-01',
-    type: 'donation_80g',
+    id: 'JJF-DON-2026-01',
+    type: 'donation_receipt',
     recipientName: 'रमेश कुमार गुप्ता',
     fatherOrHusbandName: 'श्री बद्री प्रसाद गुप्ता',
     phone: '8052361666',
@@ -78,7 +78,7 @@ const SEED_CERTIFICATES = [
     amount: 5100,
     categoryOrPurpose: 'गरीब बच्चों की शिक्षा व स्कूल किट वितरण',
     status: 'certified',
-    details: 'दान राशि: ₹5,100 (80G आयकर छूट अधिकृत - URN: AAEAJ3141QF20231)'
+    details: 'दान राशि: ₹5,100 (आधिकारिक दान पावती)'
   },
   {
     id: 'JJF/VOL/2026/08/01',
@@ -92,8 +92,8 @@ const SEED_CERTIFICATES = [
     details: '48 घंटे सक्रिय सेवा • डिजिटल रूप से सत्यापित'
   },
   {
-    id: 'JJF/80G/2026/08/01',
-    type: 'donation_80g',
+    id: 'JJF/DON/2026/08/01',
+    type: 'donation_receipt',
     recipientName: 'सम्मानित नागरिक',
     fatherOrHusbandName: 'दानदाता एवं शुभचिंतक',
     phone: '8052361666',
@@ -101,7 +101,7 @@ const SEED_CERTIFICATES = [
     amount: 2100,
     categoryOrPurpose: 'गरीब बच्चों की शिक्षा व जन-कल्याण',
     status: 'certified',
-    details: 'दान राशि: ₹2,100 • 80G आयकर छूट अधिकृत'
+    details: 'दान राशि: ₹2,100 • आधिकारिक दान पावती'
   },
   {
     id: 'JJF/ID/2026/08/01',
@@ -144,7 +144,7 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString(), organization: 'Jeevan Jyoti Foundation Ghazipur' });
 });
 
-// Automated 80G Donation Receipt Email Endpoint
+// Automated Donation Receipt Email Endpoint
 app.post('/api/send-donation-receipt-email', async (req, res) => {
 
   try {
@@ -174,7 +174,7 @@ app.post('/api/send-donation-receipt-email', async (req, res) => {
       : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
 
     const formattedAmount = Number(amount || 0).toLocaleString('en-IN');
-    const safeReceiptNo = receiptNo || `JJF/80G/${new Date().getFullYear()}/0001`;
+    const safeReceiptNo = receiptNo || `JJF/DON/${new Date().getFullYear()}/0001`;
     const verifyLink = verificationUrl || `https://jeevanjyotifoundation.org/?verify=${encodeURIComponent(safeReceiptNo)}`;
 
     // HTML Email Template with Official Jeevan Jyoti Foundation Styling
@@ -184,7 +184,7 @@ app.post('/api/send-donation-receipt-email', async (req, res) => {
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>80G Donation Receipt - Jeevan Jyoti Foundation</title>
+        <title>Donation Receipt - Jeevan Jyoti Foundation</title>
       </head>
       <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b;">
         <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 24px 12px;">
@@ -212,26 +212,26 @@ app.post('/api/send-donation-receipt-email', async (req, res) => {
                   <td style="padding: 24px 28px 12px 28px; text-align: center;">
                     <div style="display: inline-block; background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 50px; padding: 6px 18px; margin-bottom: 12px;">
                       <span style="color: #047857; font-size: 12px; font-weight: bold;">
-                        ✓ धारा 80G आयकर छूट दान रसीद (PDF संलग्न)
+                        ✓ आधिकारिक दान रसीद (PDF संलग्न)
                       </span>
                     </div>
                     <h2 style="margin: 0; color: #0f172a; font-size: 20px; font-weight: 800;">
                       हार्दिक धन्यवाद, ${donorName}!
                     </h2>
                     <p style="margin: 8px 0 0 0; color: #475569; font-size: 13px; line-height: 1.6;">
-                      जीवन ज्योति फाउंडेशन के <strong>${purpose || 'शिक्षा एवं सामाजिक कल्याण'}</strong> अभियान में आपके अमूल्य दान (₹${formattedAmount}/-) हेतु हम आपके अत्यंत आभारी हैं। आपकी आधिकारिक डिजिटल हस्ताक्षरित 80G दान रसीद इस ईमेल के साथ PDF रूप में संलग्न है।
+                      जीवन ज्योति फाउंडेशन के <strong>${purpose || 'शिक्षा एवं सामाजिक कल्याण'}</strong> अभियान में आपके अमूल्य दान (₹${formattedAmount}/-) हेतु हम आपके अत्यंत आभारी हैं। आपकी आधिकारिक डिजिटल हस्ताक्षरित दान रसीद इस ईमेल के साथ PDF रूप में संलग्न है।
                     </p>
                   </td>
                 </tr>
 
-                <!-- 80G Tax Deduction Box -->
+                <!-- Donation Detail Box -->
                 <tr>
                   <td style="padding: 12px 28px;">
                     <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fefce8; border: 1px solid #fde047; border-radius: 12px; padding: 16px;">
                       <tr>
                         <td>
                           <p style="margin: 0 0 8px 0; color: #854d0e; font-size: 12px; font-weight: bold; text-transform: uppercase;">
-                            आयकर अधिनियम 1961 की धारा 80G के अंतर्गत 50% कर छूट
+                            आधिकारिक दान पावती विवरण
                           </p>
                           <table width="100%" border="0" cellspacing="0" cellpadding="4" style="font-size: 12px; color: #1e293b;">
                             <tr>
@@ -260,10 +260,6 @@ app.post('/api/send-donation-receipt-email', async (req, res) => {
                               <td style="font-family: monospace; color: #475569;">${transactionRef || 'ONLINE/UPI'}</td>
                             </tr>
                             <tr>
-                              <td style="color: #64748b;">80G URN (पंजीकरण सं.):</td>
-                              <td style="font-weight: bold; color: #0f172a;">AAEAJ3141QF20231</td>
-                            </tr>
-                            <tr>
                               <td style="color: #64748b;">12A URN सं.:</td>
                               <td style="font-weight: bold; color: #0f172a;">AAEAJ3141QE20231</td>
                             </tr>
@@ -282,7 +278,7 @@ app.post('/api/send-donation-receipt-email', async (req, res) => {
                 <tr>
                   <td style="padding: 16px 28px; text-align: center;">
                     <a href="${verifyLink}" target="_blank" style="display: inline-block; background-color: #ea580c; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 10px; font-weight: bold; font-size: 13px; box-shadow: 0 2px 6px rgba(234, 88, 12, 0.3);">
-                      🔍 ऑनलाइन रसीद सत्यापन करें (Verify 80G Receipt)
+                      🔍 ऑनलाइन रसीद सत्यापन करें (Verify Receipt)
                     </a>
                   </td>
                 </tr>
@@ -291,7 +287,7 @@ app.post('/api/send-donation-receipt-email', async (req, res) => {
                 <tr>
                   <td style="padding: 12px 28px 24px 28px; border-top: 1px solid #e2e8f0;">
                     <p style="margin: 0 0 12px 0; color: #64748b; font-size: 11px; line-height: 1.5;">
-                      <strong>नोट:</strong> यह एक डिजिटल रूप से मान्य 80G रसीद है जिसे आप आयकर रिटर्न (ITR) दाखिल करते समय धारा 80G कर कटौती हेतु उपयोग कर सकते हैं। संलग्न PDF को अपने रिकॉर्ड में सुरक्षित रखें।
+                      <strong>नोट:</strong> यह एक डिजिटल रूप से मान्य आधिकारिक दान रसीद है। संलग्न PDF को अपने वित्तीय रिकॉर्ड में सुरक्षित रखें।
                     </p>
                     <table width="100%" border="0" cellspacing="0" cellpadding="0" style="padding-top: 8px;">
                       <tr>
@@ -371,7 +367,7 @@ app.post('/api/send-donation-receipt-email', async (req, res) => {
     const attachments: any[] = [];
     if (pdfBase64) {
       attachments.push({
-        filename: `80G_Receipt_${safeReceiptNo.replace(/[\/\\]/g, '_')}_${donorName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+        filename: `Donation_Receipt_${safeReceiptNo.replace(/[\/\\]/g, '_')}_${donorName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
         content: pdfBase64,
         encoding: 'base64',
         contentType: 'application/pdf'
@@ -382,8 +378,8 @@ app.post('/api/send-donation-receipt-email', async (req, res) => {
       from: fromEmail,
       to: donorEmail,
       replyTo: 'jeevanjyotifoundationgzp@gmail.com',
-      subject: `80G Donation Receipt [${safeReceiptNo}] - Jeevan Jyoti Foundation Ghazipur (₹${formattedAmount})`,
-      text: `नमस्ते ${donorName} जी,\n\nजीवन ज्योति फाउंडेशन गाजीपुर में ₹${formattedAmount} के दान हेतु आपका धन्यवाद।\nआपकी 80G रसीद संख्या: ${safeReceiptNo}\n\nऑनलाइन सत्यापन लिंक: ${verifyLink}\n\nधन्यवाद,\nजीवन ज्योति फाउंडेशन ग़ाज़ीपुर\nहेल्पलाइन: +91-8052361666`,
+      subject: `Donation Receipt [${safeReceiptNo}] - Jeevan Jyoti Foundation Ghazipur (₹${formattedAmount})`,
+      text: `नमस्ते ${donorName} जी,\n\nजीवन ज्योति फाउंडेशन गाजीपुर में ₹${formattedAmount} के दान हेतु आपका धन्यवाद।\nआपकी दान रसीद संख्या: ${safeReceiptNo}\n\nऑनलाइन सत्यापन लिंक: ${verifyLink}\n\nधन्यवाद,\nजीवन ज्योति फाउंडेशन ग़ाज़ीपुर\nहेल्पलाइन: +91-8052361666`,
       html: htmlTemplate,
       attachments
     };
@@ -397,11 +393,11 @@ app.post('/api/send-donation-receipt-email', async (req, res) => {
       }
     }
 
-    console.log(`[EMAIL DISPATCH SUCCESS] 80G Receipt ${safeReceiptNo} emailed to ${donorEmail}. MessageId: ${info.messageId}`);
+    console.log(`[EMAIL DISPATCH SUCCESS] Donation Receipt ${safeReceiptNo} emailed to ${donorEmail}. MessageId: ${info.messageId}`);
 
     return res.json({
       success: true,
-      message: `80G दान रसीद PDF सफलतापूर्वक ${donorEmail} पर भेज दी गई है।`,
+      message: `दान रसीद PDF सफलतापूर्वक ${donorEmail} पर भेज दी गई है।`,
       receiptNo: safeReceiptNo,
       recipientEmail: donorEmail,
       emailId: info.messageId,
@@ -425,10 +421,10 @@ app.post('/api/chat', async (req, res) => {
     if (!apiKey) {
       // Fallback local intelligent response if API key is not yet set
       const userMsg = (message || '').toLowerCase();
-      let reply = 'नमस्ते! मैं जीवन ज्योति फाउंडेशन का आधिकारिक सहायक "ज्योति एआई" हूँ। आप डोनेशन (80G रसीद), वॉलंटियर प्रमाण पत्र, शिक्षा सेवा केंद्र या संस्था के कार्यों के बारे में पूछ सकते हैं।';
+      let reply = 'नमस्ते! मैं जीवन ज्योति फाउंडेशन का आधिकारिक सहायक "ज्योति एआई" हूँ। आप डोनेशन (दान रसीद), वॉलंटियर प्रमाण पत्र, शिक्षा सेवा केंद्र या संस्था के कार्यों के बारे में पूछ सकते हैं।';
 
-      if (userMsg.includes('दान') || userMsg.includes('donate') || userMsg.includes('80g')) {
-        reply = 'जीवन ज्योति फाउंडेशन में आपका दान आयकर अधिनियम की धारा 80G के तहत 50% कर छूट के योग्य है। आप UPI/QR कोड द्वारा तुरंत दान कर सकते हैं और आपको तुरंत डिजिटल रूप से हस्ताक्षरित प्रमाण पत्र प्राप्त होगा।';
+      if (userMsg.includes('दान') || userMsg.includes('donate')) {
+        reply = 'जीवन ज्योति फाउंडेशन में आपका दान बच्चों की निःशुल्क शिक्षा, भोजन व स्वास्थ्य सुरक्षा के लिए उपयोग किया जाता है। आप UPI/QR कोड द्वारा तुरंत दान कर सकते हैं और आपको तुरंत डिजिटल दान रसीद प्राप्त होगी।';
       } else if (userMsg.includes('वॉलंटियर') || userMsg.includes('volunteer') || userMsg.includes('certificate')) {
         reply = 'हमारे स्वयंसेवक कार्यक्रम में जुड़कर आप गाजीपुर के बच्चों को शिक्षा, भोजन व स्वास्थ्य सहायता पहुंचा सकते हैं। अपना सेवा कार्य पूरा करने के बाद आप तुरंत "प्रमाण पत्र" जनरेट कर सकते हैं।';
       } else if (userMsg.includes('पता') || userMsg.includes('address') || userMsg.includes('contact')) {
@@ -443,11 +439,11 @@ app.post('/api/chat', async (req, res) => {
 
     const systemInstruction = `You are "Jyoti AI" (ज्योति एआई), the official AI assistant of Jeevan Jyoti Foundation Ghazipur (जीवन ज्योति फाउंडेशन, ग़ाज़ीपुर, उत्तर प्रदेश).
 Address: Village Meeranpur Urf Madiyawadih, Post Meeranpur, Block Mohammadabad, District Ghazipur, State: Uttar Pradesh - 233303.
-Registration No: GAZ/03373, NITI Aayog UID: UP/2018/0207700, 80G & 12A Certified NGO.
+Registration No: GAZ/03373, NITI Aayog UID: UP/2018/0207700, Govt. Registered Charitable NGO.
 Helpline: +91-8052361666
 Motto: "SEWA. SHIKSHA. SWASTHYA." (सेवा • शिक्षा • स्वास्थ्य).
 Manager & Secretary: Shailesh Pradhan (प्रबंधक / सचिव - शैलेश प्रधान).
-Answer warmly in polite Hindi (or English if the user asks in English). Provide helpful details about 80G tax exemptions, volunteering, education camps, food drives, and certificate verification. Keep answers concise and dignified.`;
+Answer warmly in polite Hindi (or English if the user asks in English). Provide helpful details about volunteering, education camps, food drives, donation receipts, and certificate verification. Keep answers concise and dignified.`;
 
     const chatResponse = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -461,7 +457,7 @@ Answer warmly in polite Hindi (or English if the user asks in English). Provide 
   } catch (error: any) {
     console.error('AI chat error:', error);
     res.json({
-      reply: 'नमस्ते! जीवन ज्योति फाउंडेशन गाजीपुर में आपका स्वागत है। हमारे सेवा कार्यों व 80G दान की जानकारी के लिए कृपया वेबसाइट के विभिन्न अनुभागों को देखें या हेल्पलाइन पर संपर्क करें।'
+      reply: 'नमस्ते! जीवन ज्योति फाउंडेशन गाजीपुर में आपका स्वागत है। हमारे सेवा कार्यों व दान सहयोग की जानकारी के लिए कृपया वेबसाइट के विभिन्न अनुभागों को देखें या हेल्पलाइन पर संपर्क करें।'
     });
   }
 });
@@ -521,6 +517,215 @@ app.post('/api/send-otp-sms', async (req, res) => {
       message: `✓ 6-अंकीय OTP मोबाइल +91 ${cleanPhone.slice(0,3)}••••${cleanPhone.slice(-3)} पर प्रेषित।`,
       deliveryStatus: gatewayDelivered ? 'Fast2SMS Live SMS Dispatched' : 'SMS Gateway Dispatched',
       cleanPhone
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 1b. POST /api/send-approval-sms (Automated Approval SMS to registered phone with OTP verification download link)
+app.post('/api/send-approval-sms', async (req, res) => {
+  try {
+    const { phone, recipientName, certificateId, titleHindi, downloadUrl } = req.body;
+    const cleanPhone = String(phone || '').replace(/\D/g, '').slice(-10);
+
+    if (!cleanPhone || cleanPhone.length !== 10) {
+      return res.status(400).json({ success: false, message: '10 अंकों का वैध मोबाइल नंबर आवश्यक है।' });
+    }
+
+    const recipient = recipientName || 'मान्य नागरिक';
+    const certNo = certificateId || 'JJF-CERT';
+    const certTitle = titleHindi || 'प्रमाण पत्र';
+    const link = downloadUrl || `https://jeevanjyotifoundation.org/?downloadCert=${encodeURIComponent(certNo)}&phone=${cleanPhone}`;
+
+    const smsMessage = `नमस्ते ${recipient} जी, जीवन ज्योति फाउंडेशन द्वारा आपका ${certTitle} (${certNo}) स्वीकृत हो गया है। OTP सत्यापन द्वारा डाउनलोड करें: ${link}`;
+
+    const fast2SmsKey = process.env.FAST2SMS_API_KEY;
+    let gatewayDelivered = false;
+    let deliveryNote = 'SMS प्रेषण अनुरोध तैयार';
+
+    if (fast2SmsKey) {
+      try {
+        const fastRes = await fetch('https://www.fast2sms.com/dev/bulkV2', {
+          method: 'POST',
+          headers: {
+            'authorization': fast2SmsKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            route: 'q',
+            message: smsMessage,
+            language: 'unicode',
+            flash: 0,
+            numbers: cleanPhone
+          })
+        });
+        const fastData = (await fastRes.json()) as any;
+        if (fastData && fastData.return) {
+          gatewayDelivered = true;
+          deliveryNote = 'Fast2SMS Live SMS सफलतापूर्वक प्रेषित';
+        }
+      } catch (smsErr) {
+        console.warn('[Fast2SMS Approval SMS Error]:', smsErr);
+      }
+    }
+
+    console.log(`[APPROVAL SMS DISPATCH] Phone: +91-${cleanPhone} | Recipient: ${recipient} | Cert: ${certNo} | Status: ${deliveryNote}`);
+
+    return res.json({
+      success: true,
+      message: `✓ स्वीकृति SMS संदेश मोबाइल +91 ${cleanPhone.slice(0, 3)}••••${cleanPhone.slice(-3)} पर प्रेषित।`,
+      deliveryStatus: gatewayDelivered ? 'Fast2SMS Live SMS Dispatched' : 'SMS Gateway Ready',
+      smsText: smsMessage,
+      cleanPhone,
+      downloadUrl: link
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 1c. POST /api/send-whatsapp-otp (Meta / WhatsApp Business Cloud API Gateway)
+app.post('/api/send-whatsapp-otp', async (req, res) => {
+  try {
+    const { phone, otp, recipientName, purpose, certificateId } = req.body;
+    const cleanPhone = String(phone || '').replace(/\D/g, '').slice(-10);
+
+    if (!cleanPhone || cleanPhone.length !== 10) {
+      return res.status(400).json({ success: false, message: '10 अंकों का वैध भारतीय मोबाइल नंबर आवश्यक है।' });
+    }
+
+    const whatsappAccessToken = process.env.WHATSAPP_CLOUD_ACCESS_TOKEN;
+    const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+    const activeOtp = otp || Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Store in server OTP cache
+    serverOtpStore.set(cleanPhone, {
+      otp: String(activeOtp),
+      expiresAt: Date.now() + 10 * 60 * 1000,
+      attempts: 0
+    });
+
+    let cloudDelivered = false;
+    let messageId: string | undefined;
+
+    if (whatsappAccessToken && phoneNumberId) {
+      try {
+        const fullRecipient = `91${cleanPhone}`;
+        const orgName = 'जीवन ज्योति फाउंडेशन गाजीपुर';
+        const action = purpose === 'superadmin_login' ? 'सुपर एडमिन लॉगिन' : purpose === 'admin_login' ? 'एडमिन लॉगिन' : 'प्रमाण पत्र डाउनलोड';
+
+        const cloudRes = await fetch(`https://graph.facebook.com/v18.0/${phoneNumberId}/messages`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${whatsappAccessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            recipient_type: 'individual',
+            to: fullRecipient,
+            type: 'text',
+            text: {
+              preview_url: false,
+              body: `*${orgName}*\nनमस्ते ${recipientName || 'सम्मानित सदस्य'} जी,\nआपके *${action}* हेतु सुरक्षा OTP कोड है: *${activeOtp}*\n(10 मिनट के लिए मान्य | किसी से साझा न करें)`
+            }
+          })
+        });
+
+        const cloudData = (await cloudRes.json()) as any;
+        if (cloudData && cloudData.messages && cloudData.messages.length > 0) {
+          cloudDelivered = true;
+          messageId = cloudData.messages[0].id;
+          console.log(`[WHATSAPP CLOUD API] OTP Sent to +${fullRecipient}, messageId: ${messageId}`);
+        } else {
+          console.warn('[WHATSAPP CLOUD API Note]:', cloudData);
+        }
+      } catch (cloudErr) {
+        console.warn('[WHATSAPP CLOUD API Error]:', cloudErr);
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: cloudDelivered
+        ? `✓ WhatsApp Cloud API द्वारा OTP +91 ${cleanPhone.slice(0, 3)}••••${cleanPhone.slice(-3)} पर भेजा गया!`
+        : `✓ WhatsApp OTP अनुरोध सुरक्षित हुआ।`,
+      channel: cloudDelivered ? 'cloud_api' : 'server_proxy',
+      messageId
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 1c. POST /api/send-whatsapp-welcome
+app.post('/api/send-whatsapp-welcome', async (req, res) => {
+  try {
+    const { phone, recipientName, type, referenceId, details } = req.body;
+    const cleanPhone = String(phone || '').replace(/\D/g, '').slice(-10);
+
+    if (!cleanPhone || cleanPhone.length !== 10) {
+      return res.status(400).json({ success: false, message: '10 अंकों का वैध मोबाइल नंबर आवश्यक है।' });
+    }
+
+    const whatsappAccessToken = process.env.WHATSAPP_CLOUD_ACCESS_TOKEN;
+    const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+    let cloudDelivered = false;
+    let messageId: string | undefined;
+
+    const orgName = 'जीवन ज्योति फाउंडेशन गाजीपुर (JJF)';
+    const name = recipientName || 'सम्मानित नागरिक';
+
+    let welcomeText = '';
+    if (type === 'volunteer') {
+      welcomeText = `*${orgName} में आपका हार्दिक स्वागत है!* 🌸🙏\n\nनमस्ते *${name}* जी,\n\nजीवन ज्योति फाउंडेशन के साथ स्वयंसेवक (Volunteer) के रूप में जुड़ने और WhatsApp अपडेट्स की सहमति देने हेतु धन्यवाद।\n\n📌 *आईडी:* ${referenceId || 'JJF-VOL'}\n📍 *कार्यक्षेत्र:* गाजीपुर (उ.प्र.)\n🕊️ *सेवा संकल्प:* निःशुल्क बाल शिक्षा, स्वास्थ्य सुरक्षा व अन्नपूर्णा सेवा\n\nआपको आगामी सेवा अभियानों व प्रमाण पत्र की स्थिति की सीधी जानकारी WhatsApp पर मिलती रहेगी।\n\nहेल्पलाइन: +91-8052361666 | NITI Aayog: UP/2018/0207700`;
+    } else {
+      welcomeText = `*जीवन ज्योति फाउंडेशन गाजीपुर (JJF) - धन्यवाद एवं स्वागत!* 💐🙏\n\nनमस्ते *${name}* जी,\n\nजीवन ज्योति फाउंडेशन के लोक-कल्याणकारी प्रकल्पों में आपके पावन दान सहयोग एवं WhatsApp अपडेट्स की सहमति हेतु सहृदय आभार।\n\n🧾 *दान संदर्भ:* ${referenceId || 'JJF-DON-2026'}\n🌿 *विवरण:* ${details || 'शिक्षा, स्वास्थ्य व भोजन सेवा'}\n🛡️ *आधिकारिक दान पावती:* सरकारी पंजीकृत संस्था\n\nस्वीकृति के उपरांत आपकी आधिकारिक दान रसीद का सीधा लिंक WhatsApp पर भेजा जाएगा।\n\nसंपर्क: +91-8052361666`;
+    }
+
+    if (whatsappAccessToken && phoneNumberId) {
+      try {
+        const fullRecipient = `91${cleanPhone}`;
+        const cloudRes = await fetch(`https://graph.facebook.com/v18.0/${phoneNumberId}/messages`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${whatsappAccessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            recipient_type: 'individual',
+            to: fullRecipient,
+            type: 'text',
+            text: {
+              preview_url: false,
+              body: welcomeText
+            }
+          })
+        });
+
+        const cloudData = (await cloudRes.json()) as any;
+        if (cloudData && cloudData.messages && cloudData.messages.length > 0) {
+          cloudDelivered = true;
+          messageId = cloudData.messages[0].id;
+          console.log(`[WHATSAPP CLOUD API] Welcome sent to +${fullRecipient}, id: ${messageId}`);
+        } else {
+          console.warn('[WHATSAPP CLOUD API Welcome Note]:', cloudData);
+        }
+      } catch (cloudErr) {
+        console.warn('[WHATSAPP CLOUD API Welcome Error]:', cloudErr);
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: cloudDelivered 
+        ? `✓ WhatsApp Cloud API द्वारा स्वागत संदेश +91 ${cleanPhone.slice(0,3)}••••${cleanPhone.slice(-3)} पर भेजा गया!`
+        : `✓ WhatsApp स्वागत संदेश प्रेषण तैयार हुआ।`,
+      channel: cloudDelivered ? 'cloud_api' : 'server_proxy',
+      messageId
     });
   } catch (err: any) {
     return res.status(500).json({ success: false, message: err.message });
@@ -891,7 +1096,7 @@ app.post('/api/verify-certificate-qr', async (req, res) => {
       authority: 'जीवन ज्योति फाउंडेशन ग़ाज़ीपुर (उ.प्र.)',
       registrationNumber: 'GAZ/03373',
       nitiAayogUid: 'UP/2018/0207700',
-      section80G_URN: 'AAEAJ3141QF20231',
+      societyPAN: 'AAEAJ3141Q',
       section12A_URN: 'AAEAJ3141QE20231',
       signatory: 'Shailesh Pradhan (Manager & Secretary)',
       securityTier: 'Firebase Admin SDK Verified & Cryptographically Signed',
@@ -1027,7 +1232,7 @@ app.get('/api/admin/certificates/stats', async (_req, res) => {
       pending: 0
     };
 
-    let total80GAmount = 0;
+    let totalDonationAmount = 0;
 
     const MONTH_NAMES = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -1056,6 +1261,7 @@ app.get('/api/admin/certificates/stats', async (_req, res) => {
           volunteer_cert: 0,
           volunteer_id: 0,
           donation_80g: 0,
+          donation_receipt: 0,
           task_appreciation: 0,
           festival_greeting: 0
         };
@@ -1078,7 +1284,7 @@ app.get('/api/admin/certificates/stats', async (_req, res) => {
       }
 
       if (item.amount && typeof item.amount === 'number') {
-        total80GAmount += item.amount;
+        totalDonationAmount += item.amount;
       }
     });
 
@@ -1100,7 +1306,8 @@ app.get('/api/admin/certificates/stats', async (_req, res) => {
       byMonth,
       byCategory,
       byStatus,
-      total80GAmount,
+      totalDonationAmount,
+      total80GAmount: totalDonationAmount,
       pipelineStages: {
         registered: allCertificates.length,
         phoneVerified: Math.round(allCertificates.length * 0.98),

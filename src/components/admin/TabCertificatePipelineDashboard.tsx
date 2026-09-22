@@ -65,7 +65,8 @@ import {
   approveCertificateInRegistry,
   rejectCertificateInRegistry,
   deleteCertificateFromRegistry,
-  getCertificateApprovalWhatsAppUrl
+  getCertificateApprovalWhatsAppUrl,
+  dispatchCertificateApprovalNotifications
 } from '../../services/certificateRegistryService';
 import toast from 'react-hot-toast';
 
@@ -201,7 +202,7 @@ export const TabCertificatePipelineDashboard: React.FC<TabCertificatePipelineDas
     });
   }, [stats, selectedYear, selectedMonth, selectedCategory, selectedStatus, selectedApprovalStatus, searchTerm]);
 
-  // Admin Approval Action: Approve certificate & trigger WhatsApp message to registered number
+  // Admin Approval Action: Approve certificate & trigger automated SMS and WhatsApp message to registered number
   const handleApproveCertificate = async (cert: RegisteredCertificateItem, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setActionProcessingId(cert.id);
@@ -209,10 +210,20 @@ export const TabCertificatePipelineDashboard: React.FC<TabCertificatePipelineDas
       const updated = approveCertificateInRegistry(cert.id, adminProfile?.name || 'Super Admin');
       if (updated) {
         toast.success(`प्रमाण पत्र ${cert.id} स्वीकृत (Approved) किया गया!`);
-        // Trigger WhatsApp notification to registered mobile with download link
-        const whatsappUrl = getCertificateApprovalWhatsAppUrl(updated);
-        window.open(whatsappUrl, '_blank');
-        toast.success(`पंजीकृत मोबाइल (+91 ${cert.phone}) पर WhatsApp संदेश लिंक तैयार!`);
+
+        // Automatically dispatch SMS to registered phone and generate WhatsApp download link
+        const notifyRes = await dispatchCertificateApprovalNotifications(updated);
+        if (notifyRes.smsSent) {
+          toast.success(`📱 पंजीकृत मोबाइल (+91 ${cert.phone}) पर स्वीकृति SMS भेजा गया!`);
+        } else {
+          toast.success(notifyRes.smsMessage);
+        }
+
+        // Open WhatsApp with direct pre-formatted message & download link
+        if (notifyRes.whatsappUrl) {
+          window.open(notifyRes.whatsappUrl, '_blank');
+        }
+
         await loadAnalyticsData(false);
         if (selectedCertDetail && selectedCertDetail.id === cert.id) {
           setSelectedCertDetail(updated);
@@ -926,8 +937,20 @@ export const TabCertificatePipelineDashboard: React.FC<TabCertificatePipelineDas
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 font-bold">स्थिति फ़िल्टर:</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-slate-400 font-bold">स्वीकृति स्थिति:</span>
+            <select
+              value={selectedApprovalStatus}
+              onChange={(e) => setSelectedApprovalStatus(e.target.value)}
+              className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
+            >
+              <option value="all">सभी स्वीकृति स्थिति (All)</option>
+              <option value="pending">प्रतीक्षारत (Pending Approval)</option>
+              <option value="approved">स्वीकृत (Approved)</option>
+              <option value="rejected">अस्वीकृत (Rejected)</option>
+            </select>
+
+            <span className="text-xs text-slate-400 font-bold ml-2">स्थिति:</span>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
@@ -960,13 +983,17 @@ export const TabCertificatePipelineDashboard: React.FC<TabCertificatePipelineDas
                   <th className="px-4 py-3">धारक / प्राप्तकर्ता</th>
                   <th className="px-4 py-3">मोबाइल नंबर</th>
                   <th className="px-4 py-3">जारी तिथि</th>
-                  <th className="px-4 py-3">पाइपलाइन स्थिति</th>
-                  <th className="px-4 py-3 text-right">कार्यवाही (Actions)</th>
+                  <th className="px-4 py-3">एडमिन स्वीकृति</th>
+                  <th className="px-4 py-3 text-right">कार्यवाही (Approve / Reject / Delete)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
                 {filteredCertificates.map((cert) => {
                   const badge = getCategoryBadge(cert.type);
+                  const isFestival = cert.type === 'festival_greeting';
+                  const effectiveApproval = isFestival ? 'approved' : (cert.approvalStatus || 'pending');
+                  const isProcessing = actionProcessingId === cert.id;
+
                   return (
                     <tr
                       key={cert.id}
@@ -1006,6 +1033,11 @@ export const TabCertificatePipelineDashboard: React.FC<TabCertificatePipelineDas
                             पिता/संरक्षक: {cert.fatherOrHusbandName}
                           </div>
                         )}
+                        {cert.amount && (
+                          <div className="text-[10px] font-bold text-emerald-700">
+                            रसीद राशि: ₹{cert.amount.toLocaleString('en-IN')}
+                          </div>
+                        )}
                       </td>
 
                       {/* Phone */}
@@ -1018,32 +1050,119 @@ export const TabCertificatePipelineDashboard: React.FC<TabCertificatePipelineDas
                         {cert.issueDate}
                       </td>
 
-                      {/* Pipeline Status */}
+                      {/* Approval Status Badge */}
                       <td className="px-4 py-3.5">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
-                          <CheckCircle className="w-3 h-3 text-emerald-600" />
-                          <span>QR प्रमाणित</span>
-                        </span>
+                        {isFestival ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200" title="त्योहार शुभकामना - स्वतः स्वीकृत">
+                            <CheckCircle className="w-3 h-3 text-purple-600" />
+                            <span>त्योहार छूट ✓</span>
+                          </span>
+                        ) : effectiveApproval === 'approved' ? (
+                          <div className="space-y-0.5">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
+                              <CheckCircle className="w-3 h-3 text-emerald-600" />
+                              <span>स्वीकृत (Approved) ✓</span>
+                            </span>
+                            {cert.approvedAt && (
+                              <div className="text-[9px] text-slate-400 font-mono">
+                                {cert.approvedAt.split('T')[0]}
+                              </div>
+                            )}
+                          </div>
+                        ) : effectiveApproval === 'rejected' ? (
+                          <div className="space-y-0.5">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-300 shadow-2xs">
+                              <AlertCircle className="w-3 h-3 text-rose-600" />
+                              <span>अस्वीकृत (Rejected)</span>
+                            </span>
+                            {cert.rejectionReason && (
+                              <div className="text-[9px] text-rose-500 max-w-[120px] truncate" title={cert.rejectionReason}>
+                                {cert.rejectionReason}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300 animate-pulse shadow-2xs">
+                            <Clock className="w-3 h-3 text-amber-700" />
+                            <span>प्रतीक्षारत (Pending)</span>
+                          </span>
+                        )}
                       </td>
 
-                      {/* Actions */}
+                      {/* Actions: Approve / Reject / Delete */}
                       <td className="px-4 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          {/* Approve Button */}
+                          {!isFestival && effectiveApproval !== 'approved' && (
+                            <button
+                              type="button"
+                              disabled={isProcessing}
+                              onClick={(e) => handleApproveCertificate(cert, e)}
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[11px] shadow-xs flex items-center gap-1 transition cursor-pointer disabled:opacity-50"
+                              title="प्रमाण पत्र स्वीकृत करें एवं पंजीकृत मोबाइल पर WhatsApp लिंक भेजें"
+                            >
+                              <ThumbsUp className="w-3 h-3 text-white" />
+                              <span>स्वीकृत करें</span>
+                            </button>
+                          )}
+
+                          {/* WhatsApp Resend if already approved */}
+                          {effectiveApproval === 'approved' && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const url = getCertificateApprovalWhatsAppUrl(cert);
+                                window.open(url, '_blank');
+                              }}
+                              className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 rounded-lg transition cursor-pointer"
+                              title="पंजीकृत नंबर पर WhatsApp स्वीकृति डाउनलोड लिंक पुनः भेजें"
+                            >
+                              <Share2 className="w-3.5 h-3.5 text-emerald-600" />
+                            </button>
+                          )}
+
+                          {/* Reject Button */}
+                          {!isFestival && effectiveApproval !== 'rejected' && (
+                            <button
+                              type="button"
+                              disabled={isProcessing}
+                              onClick={(e) => handleRejectCertificate(cert, e)}
+                              className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 rounded-lg font-bold text-[11px] flex items-center gap-1 transition cursor-pointer disabled:opacity-50"
+                              title="प्रमाण पत्र अस्वीकृत करें"
+                            >
+                              <ThumbsDown className="w-3 h-3 text-rose-600" />
+                              <span className="hidden sm:inline">अस्वीकार</span>
+                            </button>
+                          )}
+
+                          {/* Delete Button */}
+                          <button
+                            type="button"
+                            disabled={isProcessing}
+                            onClick={(e) => handleDeleteCertificate(cert, e)}
+                            className="p-1.5 bg-slate-50 hover:bg-rose-600 text-slate-400 hover:text-white border border-slate-200 hover:border-rose-600 rounded-lg transition cursor-pointer disabled:opacity-50"
+                            title="डेटाबेस से स्थायी रूप से हटाएं (Delete)"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* View Detail Button */}
                           <button
                             title="विस्तृत विवरण देखें"
                             onClick={() => setSelectedCertDetail(cert)}
-                            className="p-1.5 bg-slate-100 hover:bg-blue-100 text-slate-700 hover:text-blue-800 rounded-xl transition cursor-pointer"
+                            className="p-1.5 bg-slate-100 hover:bg-blue-100 text-slate-700 hover:text-blue-800 rounded-lg transition cursor-pointer"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="w-3.5 h-3.5" />
                           </button>
 
                           {onOpenVerificationPortal && (
                             <button
-                              title="सत्यापन पोर्टल पर देखें"
+                              title="सार्वजनिक सत्यापन पोर्टल पर देखें"
                               onClick={() => onOpenVerificationPortal(cert.id)}
-                              className="p-1.5 bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white rounded-xl transition cursor-pointer"
+                              className="p-1.5 bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white rounded-lg transition cursor-pointer"
                             >
-                              <ExternalLink className="w-4 h-4" />
+                              <ExternalLink className="w-3.5 h-3.5" />
                             </button>
                           )}
                         </div>
@@ -1138,26 +1257,77 @@ export const TabCertificatePipelineDashboard: React.FC<TabCertificatePipelineDas
             </div>
 
             {/* Modal Actions */}
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                onClick={() => setSelectedCertDetail(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
-              >
-                बंद करें
-              </button>
-              {onOpenVerificationPortal && (
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
+              <div className="flex items-center gap-2">
+                {selectedCertDetail.type !== 'festival_greeting' && selectedCertDetail.approvalStatus !== 'approved' && (
+                  <button
+                    type="button"
+                    disabled={actionProcessingId === selectedCertDetail.id}
+                    onClick={async (e) => {
+                      const cert = selectedCertDetail;
+                      await handleApproveCertificate(cert, e);
+                      setSelectedCertDetail({ ...cert, approvalStatus: 'approved', approvedAt: new Date().toISOString() });
+                    }}
+                    className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <ThumbsUp className="w-3.5 h-3.5" />
+                    <span>स्वीकृत करें (Approve)</span>
+                  </button>
+                )}
+
+                {selectedCertDetail.type !== 'festival_greeting' && selectedCertDetail.approvalStatus !== 'rejected' && (
+                  <button
+                    type="button"
+                    disabled={actionProcessingId === selectedCertDetail.id}
+                    onClick={async (e) => {
+                      const cert = selectedCertDetail;
+                      await handleRejectCertificate(cert, e);
+                      setSelectedCertDetail({ ...cert, approvalStatus: 'rejected', rejectedAt: new Date().toISOString() });
+                    }}
+                    className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <ThumbsDown className="w-3.5 h-3.5 text-rose-600" />
+                    <span>अस्वीकार (Reject)</span>
+                  </button>
+                )}
+
                 <button
-                  onClick={() => {
-                    const id = selectedCertDetail.id;
+                  type="button"
+                  disabled={actionProcessingId === selectedCertDetail.id}
+                  onClick={async (e) => {
+                    const cert = selectedCertDetail;
+                    await handleDeleteCertificate(cert, e);
                     setSelectedCertDetail(null);
-                    onOpenVerificationPortal(id);
                   }}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-blue-800 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer"
+                  className="px-3 py-2 bg-slate-50 hover:bg-rose-600 text-slate-500 hover:text-white border border-slate-200 font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  title="स्थायी रूप से हटाएं"
                 >
-                  <ExternalLink className="w-4 h-4" />
-                  <span>सत्यापन पोर्टल खोलें</span>
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>हटाएं (Delete)</span>
                 </button>
-              )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedCertDetail(null)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                >
+                  बंद करें
+                </button>
+                {onOpenVerificationPortal && (
+                  <button
+                    onClick={() => {
+                      const id = selectedCertDetail.id;
+                      setSelectedCertDetail(null);
+                      onOpenVerificationPortal(id);
+                    }}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-blue-800 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    <span>सत्यापन पोर्टल</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

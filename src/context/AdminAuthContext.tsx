@@ -21,6 +21,7 @@ import {
   logAdminActivity
 } from '../services/adminService';
 import { verifyAdminLogin } from '../services/adminCredentialsService';
+import { sendRealOtp, verifyRealOtp, SendOtpResponse } from '../services/realSmsOtpService';
 import toast from 'react-hot-toast';
 
 // ----------------------------------------------------------------------------
@@ -314,73 +315,104 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   /**
-   * मोबाइल नंबर पर OTP भेजें (Send OTP via Firebase Phone Auth with test fallback)
+   * मोबाइल नंबर पर वास्तविक OTP भेजें (Send Live OTP via SMS/WhatsApp)
    */
   const sendOtp = async (phone: string, appVerifier: RecaptchaVerifier | null): Promise<boolean> => {
     const sendOtpStart = performance.now();
-    let formattedPhone = phone.trim();
-    if (!formattedPhone.startsWith('+')) {
-      formattedPhone = `+91${formattedPhone.replace(/^0+/, '')}`;
+    const cleanDigits = phone.replace(/\D/g, '').slice(-10);
+    if (cleanDigits.length !== 10) {
+      toast.error('कृपया 10 अंकों का मान्य मोबाइल नंबर दर्ज करें!');
+      return false;
     }
 
-    console.info(`%c[AdminAuth:OTP] 📲 Requesting SMS OTP transmission to ${formattedPhone}...`, 'color: #3b82f6; font-weight: bold;');
+    const formattedPhone = `+91${cleanDigits}`;
+    console.info(`%c[AdminAuth:OTP] 📲 Requesting Live SMS/WhatsApp OTP transmission to ${formattedPhone}...`, 'color: #3b82f6; font-weight: bold;');
 
-    try {
-      if (appVerifier) {
+    // First, try Firebase Phone Auth if appVerifier is available
+    if (appVerifier) {
+      try {
         const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
         setConfirmationResult(confirmation);
         recordAndLogPerf(`Firebase SMS OTP Dispatched (${formattedPhone})`, sendOtpStart, {
           verificationId: confirmation.verificationId
         });
-        toast.success(`OTP ${formattedPhone} पर भेज दिया गया है!`);
+        toast.success(`OTP कोड मोबाइल ${formattedPhone} पर SMS द्वारा भेज दिया गया है!`);
         return true;
+      } catch (fbError: unknown) {
+        const err = fbError as { code?: string; message?: string };
+        console.warn('[AdminAuth:OTP] Firebase SMS dispatch failed, falling back to direct SMS/WhatsApp gateway:', err.message || err.code);
       }
-      throw new Error('Verifier not initialized');
-    } catch (error: unknown) {
-      const err = error as { code?: string; message?: string };
-      console.warn('[AdminAuth:OTP] ⚠️ Live SMS notice, engaging fast test OTP fallback:', err.message || err.code || error);
+    }
 
-      // Fallback verification for demo/sandbox environments when live SMS service is unconfigured
-      const simulatedConfirmation: ConfirmationResult = {
-        verificationId: `sim-verify-${Date.now()}`,
+    // Direct Real SMS & WhatsApp Gateway Transmission
+    try {
+      const isSuper = cleanDigits === SUPER_ADMIN_PHONE;
+      const isAdmin = cleanDigits === ADMIN_PHONE;
+      const recipient = isSuper ? 'श्री शैलेश प्रधान जी (सुपर एडमिन)' : isAdmin ? 'अधिकृत व्यवस्थापक (एडमिन)' : 'प्रशासनिक अधिकारी';
+      const purpose = isSuper ? 'superadmin_login' : isAdmin ? 'admin_login' : 'admin_login';
+
+      const realOtpRes = await sendRealOtp({
+        phone: cleanDigits,
+        recipientName: recipient,
+        purpose: purpose
+      });
+
+      if (!realOtpRes.success) {
+        toast.error(realOtpRes.message || 'OTP भेजने में विफलता हुई। कृपया नेटवर्क की जांच करें।');
+        return false;
+      }
+
+      // Store verification session via ConfirmationResult interface
+      const realOtpConfirmation: ConfirmationResult = {
+        verificationId: realOtpRes.sessionToken || `sms-verify-${Date.now()}`,
         confirm: async (verificationCode: string) => {
           const verifyStart = performance.now();
-          if (verificationCode && verificationCode.length >= 4) {
-            const cleanDigits = formattedPhone.replace(/\D/g, '');
-            const mockUser = {
-              uid: `phone-admin-${cleanDigits}`,
-              phoneNumber: formattedPhone,
-              email: null,
-              displayName: 'अधिकृत एडमिन',
-              emailVerified: false,
-              isAnonymous: false,
-              metadata: {},
-              providerData: [],
-              refreshToken: '',
-              tenantId: null,
-              delete: async () => {},
-              getIdToken: async () => 'mock-token',
-              getIdTokenResult: async () => ({} as any),
-              reload: async () => {},
-              toJSON: () => ({})
-            } as unknown as FirebaseUser;
+          const verifyRes = await verifyRealOtp({
+            phone: cleanDigits,
+            otp: verificationCode.trim(),
+            sessionToken: realOtpRes.sessionToken
+          });
 
-            recordAndLogPerf(`Simulated Code Confirmation (${verificationCode})`, verifyStart);
-            return {
-              user: mockUser,
-              providerId: 'phone',
-              operationType: 'signIn'
-            };
+          if (!verifyRes.verified) {
+            recordAndLogPerf(`Real Code Verification Rejected (${verificationCode})`, verifyStart);
+            throw new Error(verifyRes.message || 'auth/invalid-verification-code');
           }
-          recordAndLogPerf(`Simulated Code Verification Failed (${verificationCode})`, verifyStart);
-          throw new Error('auth/invalid-verification-code');
+
+          const mockUser = {
+            uid: `admin-phone-${cleanDigits}`,
+            phoneNumber: formattedPhone,
+            email: null,
+            displayName: recipient,
+            emailVerified: true,
+            isAnonymous: false,
+            metadata: {},
+            providerData: [],
+            refreshToken: '',
+            tenantId: null,
+            delete: async () => {},
+            getIdToken: async () => 'real-admin-token',
+            getIdTokenResult: async () => ({} as any),
+            reload: async () => {},
+            toJSON: () => ({})
+          } as unknown as FirebaseUser;
+
+          recordAndLogPerf(`Real SMS Code Confirmed (${cleanDigits})`, verifyStart);
+          return {
+            user: mockUser,
+            providerId: 'phone',
+            operationType: 'signIn'
+          };
         }
       };
 
-      setConfirmationResult(simulatedConfirmation);
-      recordAndLogPerf(`Fast Fallback OTP Engine Ready (${formattedPhone})`, sendOtpStart);
-      toast.success(`📱 परीक्षण OTP: 123456 (मोबाइल ${formattedPhone})`);
+      setConfirmationResult(realOtpConfirmation);
+      recordAndLogPerf(`Real SMS & WhatsApp OTP Dispatched (${formattedPhone})`, sendOtpStart);
+      toast.success(realOtpRes.message || `OTP कोड मोबाइल एवं WhatsApp पर भेजा गया!`);
       return true;
+    } catch (realErr: any) {
+      console.error('[AdminAuth:OTP] Real OTP Gateway error:', realErr);
+      toast.error('OTP सेवा से संपर्क करने में तकनीकी समस्या हुई। कृपया पुनः प्रयास करें।');
+      return false;
     }
   };
 
